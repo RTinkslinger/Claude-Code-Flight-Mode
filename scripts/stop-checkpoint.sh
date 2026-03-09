@@ -3,7 +3,7 @@
 # Only fires when FLIGHT_MODE.md exists (flight mode active)
 # Uses --no-verify because this is an emergency checkpoint — pre-commit hooks
 # should not prevent saving work when a session is ending on shaky WiFi
-set -euo pipefail
+set -uo pipefail
 
 INPUT=$(cat)
 CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
@@ -21,24 +21,26 @@ if [ "$STOP_ACTIVE" = "true" ]; then
   exit 0
 fi
 
-# Check for uncommitted changes (works on repos with no commits too)
-if [ -z "$(git status --porcelain 2>/dev/null)" ]; then
+# Check for tracked file changes only (exclude untracked ?? lines)
+# FLIGHT_MODE.md itself is typically untracked — don't trigger on that alone
+TRACKED_CHANGES=$(git status --porcelain 2>/dev/null | grep -v '^??' | head -1 || true)
+if [ -z "$TRACKED_CHANGES" ]; then
   exit 0
 fi
 
 # Stage modified tracked files (not untracked — respect .gitignore)
-git add -u 2>/dev/null || true
+git add -u > /dev/null 2>&1 || true
 
-# Commit with auto-checkpoint message
-git commit -m "flight: auto-checkpoint on session end" --no-verify 2>/dev/null || true
-
-# Output JSON so Claude sees confirmation
-cat <<EOF
+# Commit with auto-checkpoint message (suppress all git output)
+if git commit -m "flight: auto-checkpoint on session end" --no-verify > /dev/null 2>&1; then
+  # Output JSON so Claude sees confirmation
+  cat <<EOF
 {
   "decision": "approve",
   "reason": "Flight mode: auto-checkpointed uncommitted changes before session end.",
   "systemMessage": "Flight mode auto-checkpoint: committed uncommitted changes with 'flight: auto-checkpoint on session end'."
 }
 EOF
+fi
 
 exit 0
