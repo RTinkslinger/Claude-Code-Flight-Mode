@@ -1,0 +1,12 @@
+{
+  "name": "flight-mode",
+  "version": "1.0.0",
+  "description": "Makes Claude Code resilient on unreliable in-flight WiFi with micro-task decomposition, checkpointing, and context budgeting",
+  "author": {
+    "name": "RTinkslinger",
+    "url": "https://github.com/RTinkslinger"
+  },
+  "repository": "https://github.com/RTinkslinger/Claude-Code-Flight-Mode",
+  "license": "MIT",
+  "keywords": ["flight-mode", "wifi", "resilience", "checkpointing", "offline", "degraded-network"]
+}
