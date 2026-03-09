@@ -1,0 +1,28 @@
+{
+  "description": "Flight mode hooks — auto-checkpoint on session end, context budget monitoring",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/stop-checkpoint.sh\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Read|Edit|Write|Bash|Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/context-monitor.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
