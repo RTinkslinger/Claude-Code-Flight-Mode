@@ -1,0 +1,5 @@
+.DS_Store
+FLIGHT_MODE.md
+.flight-state.md
+.flight-state-*.md
+.flight-context.json
