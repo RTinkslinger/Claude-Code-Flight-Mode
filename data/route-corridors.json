@@ -1,0 +1,252 @@
+{
+  "_note": "Route corridor data for major flight paths. Signal quality (0-100) models GEO satellite coverage: strong near dense ground infrastructure, weak over open ocean, degraded >55°N, dead >65°N. Hour 0 = gate departure (signal 0), WiFi activates ~0.5h after departure at ~10,000ft, deactivates ~0.5h before landing. Waypoints follow approximate great-circle routes.",
+  "_signal_model": {
+    "ground_proximity": "ATG + satellite = 85-95",
+    "coastal_satellite": "Strong GEO beams = 70-85",
+    "open_ocean": "Sparse GEO spot beams = 30-55",
+    "high_latitude_55_65N": "Degraded GEO elevation angle = 15-40",
+    "above_65N": "Below GEO horizon = 0-10",
+    "equatorial_ocean": "Strong GEO coverage = 50-70"
+  },
+  "corridors": {
+    "transpacific-north": {
+      "name": "Transpacific North (East Asia → US West Coast)",
+      "examples": ["HKG-LAX", "NRT-SFO", "ICN-LAX"],
+      "duration_hours": 13,
+      "peak_latitude": 48,
+      "weak_zone": {
+        "start_hour": 5,
+        "end_hour": 8,
+        "reason": "Sparse GEO beams over central North Pacific, farthest from any ground station"
+      },
+      "waypoints": [
+        {"hour": 0, "lat": 22.3, "lon": 114.2, "signal": 0, "phase": "departure", "note": "Hong Kong gate — WiFi off"},
+        {"hour": 0.5, "lat": 23.8, "lon": 116.0, "signal": 72, "phase": "climb", "note": "WiFi activates ~10,000ft over South China Sea"},
+        {"hour": 1, "lat": 26.5, "lon": 119.5, "signal": 68, "phase": "cruise", "note": "Crossing Taiwan Strait, coastal satellite coverage"},
+        {"hour": 2, "lat": 31.2, "lon": 126.8, "signal": 62, "phase": "cruise", "note": "East China Sea, Japan ground stations in range"},
+        {"hour": 3, "lat": 35.5, "lon": 135.0, "signal": 65, "phase": "cruise", "note": "Passing south of Japan, good Ku-band coverage"},
+        {"hour": 4, "lat": 39.8, "lon": 144.5, "signal": 52, "phase": "cruise", "note": "Northeast of Japan, entering open Pacific"},
+        {"hour": 5, "lat": 43.5, "lon": 155.0, "signal": 38, "phase": "cruise", "note": "Open North Pacific — GEO beams thinning"},
+        {"hour": 6, "lat": 46.2, "lon": 165.5, "signal": 30, "phase": "cruise", "note": "Central Pacific, weakest coverage zone begins"},
+        {"hour": 7, "lat": 47.8, "lon": 176.0, "signal": 28, "phase": "cruise", "note": "Near dateline, peak latitude, minimum signal"},
+        {"hour": 8, "lat": 48.0, "lon": -173.0, "signal": 32, "phase": "cruise", "note": "Past dateline, still sparse coverage"},
+        {"hour": 9, "lat": 46.8, "lon": -161.5, "signal": 40, "phase": "cruise", "note": "Descending latitude, signal improving"},
+        {"hour": 10, "lat": 44.5, "lon": -150.0, "signal": 48, "phase": "cruise", "note": "Approaching Alaska range, more GEO visibility"},
+        {"hour": 11, "lat": 41.2, "lon": -138.5, "signal": 58, "phase": "cruise", "note": "Eastern Pacific, US satellite beams strengthening"},
+        {"hour": 12, "lat": 37.5, "lon": -127.0, "signal": 72, "phase": "cruise", "note": "Approaching US coast, strong coverage"},
+        {"hour": 12.5, "lat": 35.2, "lon": -121.5, "signal": 80, "phase": "descent", "note": "California coast in range, ATG + satellite"},
+        {"hour": 13, "lat": 33.9, "lon": -118.4, "signal": 0, "phase": "landing", "note": "Los Angeles — landed, WiFi off"}
+      ]
+    },
+    "transatlantic": {
+      "name": "Transatlantic (Europe → US East Coast)",
+      "examples": ["LHR-JFK", "CDG-JFK", "FRA-ORD", "LHR-BOS"],
+      "duration_hours": 8,
+      "peak_latitude": 54,
+      "weak_zone": {
+        "start_hour": 3,
+        "end_hour": 5,
+        "reason": "Mid-Atlantic open ocean, no ground infrastructure, moderate GEO elevation"
+      },
+      "waypoints": [
+        {"hour": 0, "lat": 51.5, "lon": -0.5, "signal": 0, "phase": "departure", "note": "London Heathrow gate — WiFi off"},
+        {"hour": 0.5, "lat": 52.0, "lon": -2.5, "signal": 82, "phase": "climb", "note": "WiFi activates over southern England, strong ATG"},
+        {"hour": 1, "lat": 52.8, "lon": -6.5, "signal": 75, "phase": "cruise", "note": "Over Ireland, good European satellite coverage"},
+        {"hour": 2, "lat": 53.5, "lon": -14.0, "signal": 60, "phase": "cruise", "note": "Past Ireland, entering open Atlantic"},
+        {"hour": 3, "lat": 54.0, "lon": -22.0, "signal": 48, "phase": "cruise", "note": "Mid-Atlantic, GEO coverage moderate at this latitude"},
+        {"hour": 4, "lat": 53.8, "lon": -30.0, "signal": 42, "phase": "cruise", "note": "Central Atlantic, weakest point on route"},
+        {"hour": 5, "lat": 52.5, "lon": -38.0, "signal": 45, "phase": "cruise", "note": "Western Atlantic, Newfoundland beams starting"},
+        {"hour": 6, "lat": 50.2, "lon": -46.0, "signal": 55, "phase": "cruise", "note": "Approaching Newfoundland, coverage improving"},
+        {"hour": 7, "lat": 46.5, "lon": -56.0, "signal": 68, "phase": "cruise", "note": "Over Maritimes, North American satellites strong"},
+        {"hour": 7.5, "lat": 43.0, "lon": -65.0, "signal": 82, "phase": "descent", "note": "US Northeast corridor, excellent ATG + satellite"},
+        {"hour": 8, "lat": 40.6, "lon": -73.8, "signal": 0, "phase": "landing", "note": "New York JFK — landed, WiFi off"}
+      ]
+    },
+    "polar-me-us": {
+      "name": "Polar Route (Middle East → US via Arctic)",
+      "examples": ["DXB-SFO", "DOH-IAD", "DXB-IAH"],
+      "duration_hours": 16,
+      "peak_latitude": 78,
+      "weak_zone": {
+        "start_hour": 6,
+        "end_hour": 10,
+        "reason": "Arctic polar crossing above 65°N — below GEO satellite horizon, complete blackout"
+      },
+      "waypoints": [
+        {"hour": 0, "lat": 25.3, "lon": 55.4, "signal": 0, "phase": "departure", "note": "Dubai gate — WiFi off"},
+        {"hour": 0.5, "lat": 26.5, "lon": 55.0, "signal": 70, "phase": "climb", "note": "WiFi activates over Persian Gulf"},
+        {"hour": 1, "lat": 29.5, "lon": 52.5, "signal": 72, "phase": "cruise", "note": "Over Iran, good Middle East GEO coverage"},
+        {"hour": 2, "lat": 35.0, "lon": 49.0, "signal": 65, "phase": "cruise", "note": "Northern Iran, coverage still reasonable"},
+        {"hour": 3, "lat": 41.0, "lon": 45.5, "signal": 60, "phase": "cruise", "note": "Caucasus region, European/ME satellite overlap"},
+        {"hour": 4, "lat": 48.0, "lon": 42.0, "signal": 50, "phase": "cruise", "note": "Southern Russia, GEO elevation dropping"},
+        {"hour": 5, "lat": 55.5, "lon": 38.0, "signal": 35, "phase": "cruise", "note": "Central Russia, GEO elevation angle getting low"},
+        {"hour": 6, "lat": 63.0, "lon": 32.0, "signal": 15, "phase": "cruise", "note": "Northern Russia — entering polar blackout zone"},
+        {"hour": 7, "lat": 70.0, "lon": 24.0, "signal": 5, "phase": "cruise", "note": "Arctic — GEO satellites below horizon"},
+        {"hour": 8, "lat": 76.0, "lon": 8.0, "signal": 0, "phase": "cruise", "note": "High Arctic, Svalbard region — no GEO coverage"},
+        {"hour": 9, "lat": 78.0, "lon": -20.0, "signal": 0, "phase": "cruise", "note": "Peak latitude over Greenland — complete blackout"},
+        {"hour": 10, "lat": 75.0, "lon": -42.0, "signal": 8, "phase": "cruise", "note": "Descending from polar cap, signal traces returning"},
+        {"hour": 11, "lat": 69.0, "lon": -55.0, "signal": 18, "phase": "cruise", "note": "Northern Canada — GEO barely visible on horizon"},
+        {"hour": 12, "lat": 63.0, "lon": -65.0, "signal": 30, "phase": "cruise", "note": "Hudson Bay region, GEO coverage slowly recovering"},
+        {"hour": 13, "lat": 56.0, "lon": -75.0, "signal": 48, "phase": "cruise", "note": "Northern Quebec, Canadian satellite footprint"},
+        {"hour": 14, "lat": 49.0, "lon": -85.0, "signal": 62, "phase": "cruise", "note": "Great Lakes region, good North American coverage"},
+        {"hour": 15, "lat": 42.0, "lon": -100.0, "signal": 78, "phase": "cruise", "note": "US Midwest, excellent ATG + satellite"},
+        {"hour": 15.5, "lat": 39.5, "lon": -110.0, "signal": 82, "phase": "descent", "note": "Approaching West Coast corridor"},
+        {"hour": 16, "lat": 37.8, "lon": -122.4, "signal": 0, "phase": "landing", "note": "San Francisco — landed, WiFi off"}
+      ]
+    },
+    "transpacific-south": {
+      "name": "Transpacific South (Southeast Asia → US West Coast)",
+      "examples": ["SIN-LAX", "BKK-LAX", "SIN-SFO"],
+      "duration_hours": 17,
+      "peak_latitude": 35,
+      "weak_zone": {
+        "start_hour": 7,
+        "end_hour": 12,
+        "reason": "Central Pacific open ocean — sparse GEO spot beams but no latitude penalty"
+      },
+      "waypoints": [
+        {"hour": 0, "lat": 1.4, "lon": 104.0, "signal": 0, "phase": "departure", "note": "Singapore gate — WiFi off"},
+        {"hour": 0.5, "lat": 3.0, "lon": 105.5, "signal": 68, "phase": "climb", "note": "WiFi activates over South China Sea"},
+        {"hour": 1, "lat": 6.5, "lon": 108.5, "signal": 62, "phase": "cruise", "note": "South China Sea, equatorial GEO coverage"},
+        {"hour": 2, "lat": 12.0, "lon": 114.0, "signal": 58, "phase": "cruise", "note": "Near Philippines, good GEO elevation"},
+        {"hour": 3, "lat": 16.5, "lon": 120.0, "signal": 60, "phase": "cruise", "note": "Passing Luzon, Philippine satellite coverage"},
+        {"hour": 4, "lat": 20.5, "lon": 127.0, "signal": 55, "phase": "cruise", "note": "Western Pacific, leaving Asian coastal zone"},
+        {"hour": 5, "lat": 24.0, "lon": 134.5, "signal": 50, "phase": "cruise", "note": "Open Pacific south of Japan"},
+        {"hour": 6, "lat": 27.0, "lon": 142.5, "signal": 48, "phase": "cruise", "note": "Pacific Ocean, Bonin Islands region"},
+        {"hour": 7, "lat": 29.5, "lon": 151.0, "signal": 42, "phase": "cruise", "note": "Central Pacific — entering weak zone"},
+        {"hour": 8, "lat": 31.0, "lon": 159.5, "signal": 38, "phase": "cruise", "note": "Open Pacific, sparse beam coverage"},
+        {"hour": 9, "lat": 32.5, "lon": 168.0, "signal": 35, "phase": "cruise", "note": "Deep Pacific, minimum infrastructure"},
+        {"hour": 10, "lat": 33.5, "lon": 176.5, "signal": 33, "phase": "cruise", "note": "Near dateline, weakest signal on route"},
+        {"hour": 11, "lat": 34.0, "lon": -175.0, "signal": 35, "phase": "cruise", "note": "Past dateline, still sparse"},
+        {"hour": 12, "lat": 34.5, "lon": -166.5, "signal": 40, "phase": "cruise", "note": "Eastern Pacific, Hawaii beams reaching"},
+        {"hour": 13, "lat": 34.8, "lon": -158.0, "signal": 52, "phase": "cruise", "note": "Near Hawaii, strong Pacific Hub coverage"},
+        {"hour": 14, "lat": 35.0, "lon": -149.0, "signal": 45, "phase": "cruise", "note": "Past Hawaii, moderate coverage"},
+        {"hour": 15, "lat": 34.8, "lon": -140.0, "signal": 55, "phase": "cruise", "note": "Eastern Pacific, US satellite beams reaching"},
+        {"hour": 16, "lat": 34.5, "lon": -130.0, "signal": 68, "phase": "cruise", "note": "Approaching US coast, coverage strengthening"},
+        {"hour": 16.5, "lat": 34.2, "lon": -124.0, "signal": 78, "phase": "descent", "note": "California coast, ATG + satellite"},
+        {"hour": 17, "lat": 33.9, "lon": -118.4, "signal": 0, "phase": "landing", "note": "Los Angeles — landed, WiFi off"}
+      ]
+    },
+    "asia-europe": {
+      "name": "Asia–Europe (East Asia → Europe via Siberian Corridor)",
+      "examples": ["HKG-LHR", "NRT-LHR", "ICN-FRA", "NRT-CDG"],
+      "duration_hours": 12,
+      "peak_latitude": 58,
+      "weak_zone": {
+        "start_hour": 4,
+        "end_hour": 8,
+        "reason": "Siberian corridor — sparse ground infrastructure, GEO elevation angle degraded at 55-60°N"
+      },
+      "waypoints": [
+        {"hour": 0, "lat": 22.3, "lon": 114.2, "signal": 0, "phase": "departure", "note": "Hong Kong gate — WiFi off"},
+        {"hour": 0.5, "lat": 24.0, "lon": 112.5, "signal": 70, "phase": "climb", "note": "WiFi activates over southern China"},
+        {"hour": 1, "lat": 28.5, "lon": 108.0, "signal": 68, "phase": "cruise", "note": "Central China, good Asian GEO coverage"},
+        {"hour": 2, "lat": 35.0, "lon": 102.0, "signal": 60, "phase": "cruise", "note": "Western China, coverage thinning"},
+        {"hour": 3, "lat": 42.0, "lon": 95.0, "signal": 52, "phase": "cruise", "note": "Mongolia/Xinjiang border, sparse ground stations"},
+        {"hour": 4, "lat": 48.5, "lon": 87.0, "signal": 40, "phase": "cruise", "note": "Southern Siberia — entering weak zone"},
+        {"hour": 5, "lat": 53.0, "lon": 78.0, "signal": 32, "phase": "cruise", "note": "Central Siberia, minimal infrastructure"},
+        {"hour": 6, "lat": 56.5, "lon": 68.0, "signal": 28, "phase": "cruise", "note": "Siberia near peak latitude, GEO angle low"},
+        {"hour": 7, "lat": 58.0, "lon": 57.0, "signal": 30, "phase": "cruise", "note": "Ural Mountains region, weakest coverage"},
+        {"hour": 8, "lat": 57.5, "lon": 45.0, "signal": 38, "phase": "cruise", "note": "Western Russia, European beams reaching"},
+        {"hour": 9, "lat": 55.5, "lon": 34.0, "signal": 52, "phase": "cruise", "note": "Central Russia, coverage improving"},
+        {"hour": 10, "lat": 54.0, "lon": 22.0, "signal": 65, "phase": "cruise", "note": "Eastern Europe, strong European coverage"},
+        {"hour": 11, "lat": 52.5, "lon": 10.0, "signal": 80, "phase": "cruise", "note": "Germany, excellent ATG + satellite"},
+        {"hour": 11.5, "lat": 52.0, "lon": 3.0, "signal": 85, "phase": "descent", "note": "Crossing into UK airspace"},
+        {"hour": 12, "lat": 51.5, "lon": -0.5, "signal": 0, "phase": "landing", "note": "London Heathrow — landed, WiFi off"}
+      ]
+    },
+    "us-domestic": {
+      "name": "US Domestic",
+      "examples": ["JFK-LAX", "SFO-JFK", "ORD-MIA", "LAX-SEA"],
+      "duration_hours": 5,
+      "peak_latitude": 42,
+      "weak_zone": null,
+      "waypoints": [
+        {"hour": 0, "lat": 40.6, "lon": -73.8, "signal": 0, "phase": "departure", "note": "New York JFK gate — WiFi off"},
+        {"hour": 0.3, "lat": 41.0, "lon": -74.5, "signal": 88, "phase": "climb", "note": "WiFi activates quickly — dense ATG network"},
+        {"hour": 1, "lat": 41.5, "lon": -80.0, "signal": 92, "phase": "cruise", "note": "Pennsylvania, excellent ATG coverage"},
+        {"hour": 2, "lat": 40.5, "lon": -88.0, "signal": 90, "phase": "cruise", "note": "Illinois/Indiana, strong continental coverage"},
+        {"hour": 3, "lat": 38.5, "lon": -98.0, "signal": 88, "phase": "cruise", "note": "Kansas, good ATG + satellite"},
+        {"hour": 4, "lat": 36.0, "lon": -108.0, "signal": 85, "phase": "cruise", "note": "New Mexico/Arizona, slightly thinner ATG"},
+        {"hour": 4.5, "lat": 34.8, "lon": -114.0, "signal": 82, "phase": "descent", "note": "Mojave Desert approach, coverage strong"},
+        {"hour": 5, "lat": 33.9, "lon": -118.4, "signal": 0, "phase": "landing", "note": "Los Angeles — landed, WiFi off"}
+      ]
+    },
+    "intra-europe": {
+      "name": "Intra-Europe (Short-Haul)",
+      "examples": ["LHR-CDG", "FRA-BCN", "AMS-FCO", "LHR-FRA"],
+      "duration_hours": 2.5,
+      "peak_latitude": 52,
+      "weak_zone": null,
+      "waypoints": [
+        {"hour": 0, "lat": 51.5, "lon": -0.5, "signal": 0, "phase": "departure", "note": "London Heathrow gate — WiFi off"},
+        {"hour": 0.3, "lat": 51.2, "lon": 0.5, "signal": 80, "phase": "climb", "note": "WiFi activates over Kent, strong European ATG"},
+        {"hour": 0.5, "lat": 50.8, "lon": 1.5, "signal": 85, "phase": "cruise", "note": "English Channel, dense European coverage"},
+        {"hour": 1, "lat": 50.0, "lon": 4.0, "signal": 88, "phase": "cruise", "note": "Belgium, excellent continental coverage"},
+        {"hour": 1.5, "lat": 49.8, "lon": 6.5, "signal": 88, "phase": "cruise", "note": "Luxembourg/Germany border"},
+        {"hour": 2, "lat": 50.0, "lon": 8.0, "signal": 85, "phase": "descent", "note": "Approaching Frankfurt, strong ATG"},
+        {"hour": 2.5, "lat": 50.0, "lon": 8.6, "signal": 0, "phase": "landing", "note": "Frankfurt — landed, WiFi off"}
+      ]
+    },
+    "intra-asia": {
+      "name": "Intra-Asia (Regional)",
+      "examples": ["HKG-NRT", "SIN-ICN", "BKK-NRT", "SIN-HKG"],
+      "duration_hours": 5,
+      "peak_latitude": 32,
+      "weak_zone": {
+        "start_hour": 2,
+        "end_hour": 3,
+        "reason": "East China Sea / open water segment with slightly reduced coverage"
+      },
+      "waypoints": [
+        {"hour": 0, "lat": 22.3, "lon": 114.2, "signal": 0, "phase": "departure", "note": "Hong Kong gate — WiFi off"},
+        {"hour": 0.3, "lat": 23.0, "lon": 114.8, "signal": 72, "phase": "climb", "note": "WiFi activates over Pearl River Delta"},
+        {"hour": 1, "lat": 26.5, "lon": 118.5, "signal": 70, "phase": "cruise", "note": "Fujian coast, good Asian coverage"},
+        {"hour": 2, "lat": 30.0, "lon": 124.0, "signal": 55, "phase": "cruise", "note": "East China Sea, reduced over water"},
+        {"hour": 3, "lat": 32.5, "lon": 130.0, "signal": 58, "phase": "cruise", "note": "Approaching Kyushu, Japan coverage reaching"},
+        {"hour": 4, "lat": 34.5, "lon": 135.5, "signal": 72, "phase": "cruise", "note": "Over Osaka region, strong Japanese ATG"},
+        {"hour": 4.5, "lat": 35.2, "lon": 138.5, "signal": 75, "phase": "descent", "note": "Approaching Tokyo, excellent coverage"},
+        {"hour": 5, "lat": 35.8, "lon": 140.4, "signal": 0, "phase": "landing", "note": "Tokyo Narita — landed, WiFi off"}
+      ]
+    },
+    "me-europe": {
+      "name": "Middle East–Europe (Gulf → Europe)",
+      "examples": ["DXB-LHR", "DOH-FRA", "DXB-CDG", "AUH-LHR"],
+      "duration_hours": 7,
+      "peak_latitude": 48,
+      "weak_zone": null,
+      "waypoints": [
+        {"hour": 0, "lat": 25.3, "lon": 55.4, "signal": 0, "phase": "departure", "note": "Dubai gate — WiFi off"},
+        {"hour": 0.5, "lat": 26.5, "lon": 54.0, "signal": 72, "phase": "climb", "note": "WiFi activates over Persian Gulf"},
+        {"hour": 1, "lat": 30.0, "lon": 50.0, "signal": 68, "phase": "cruise", "note": "Iraq/Kuwait, Middle East satellite coverage"},
+        {"hour": 2, "lat": 35.5, "lon": 44.0, "signal": 62, "phase": "cruise", "note": "Northern Iraq/Turkey border"},
+        {"hour": 3, "lat": 40.5, "lon": 37.0, "signal": 65, "phase": "cruise", "note": "Central Turkey, good coverage"},
+        {"hour": 4, "lat": 44.0, "lon": 28.0, "signal": 70, "phase": "cruise", "note": "Bulgaria/Romania, European satellite footprint"},
+        {"hour": 5, "lat": 47.5, "lon": 18.0, "signal": 78, "phase": "cruise", "note": "Hungary, strong European coverage"},
+        {"hour": 6, "lat": 50.0, "lon": 8.0, "signal": 85, "phase": "cruise", "note": "Germany, excellent ATG + satellite"},
+        {"hour": 6.5, "lat": 51.0, "lon": 2.0, "signal": 85, "phase": "descent", "note": "Crossing Channel, strong coverage"},
+        {"hour": 7, "lat": 51.5, "lon": -0.5, "signal": 0, "phase": "landing", "note": "London Heathrow — landed, WiFi off"}
+      ]
+    },
+    "australia-asia": {
+      "name": "Australia–Asia (Australia → Southeast/East Asia)",
+      "examples": ["SYD-SIN", "MEL-HKG", "SYD-HKG", "MEL-SIN"],
+      "duration_hours": 8,
+      "peak_latitude": -1,
+      "weak_zone": null,
+      "waypoints": [
+        {"hour": 0, "lat": -33.9, "lon": 151.2, "signal": 0, "phase": "departure", "note": "Sydney gate — WiFi off"},
+        {"hour": 0.5, "lat": -32.5, "lon": 150.0, "signal": 72, "phase": "climb", "note": "WiFi activates over New South Wales"},
+        {"hour": 1, "lat": -28.0, "lon": 146.0, "signal": 68, "phase": "cruise", "note": "Queensland interior, Australian satellite coverage"},
+        {"hour": 2, "lat": -21.0, "lon": 139.0, "signal": 62, "phase": "cruise", "note": "Northern Australia, good GEO at equatorial lat"},
+        {"hour": 3, "lat": -14.0, "lon": 131.0, "signal": 65, "phase": "cruise", "note": "Timor Sea, strong equatorial GEO coverage"},
+        {"hour": 4, "lat": -8.0, "lon": 122.0, "signal": 68, "phase": "cruise", "note": "Indonesian archipelago, excellent equatorial position"},
+        {"hour": 5, "lat": -4.0, "lon": 115.0, "signal": 70, "phase": "cruise", "note": "Borneo/Java Sea, peak GEO coverage zone"},
+        {"hour": 6, "lat": -1.0, "lon": 110.0, "signal": 72, "phase": "cruise", "note": "Equatorial — directly under GEO arc, optimal coverage"},
+        {"hour": 7, "lat": 1.0, "lon": 106.0, "signal": 70, "phase": "cruise", "note": "Approaching Singapore, strong regional coverage"},
+        {"hour": 7.5, "lat": 1.2, "lon": 104.5, "signal": 68, "phase": "descent", "note": "Singapore approach, good coverage"},
+        {"hour": 8, "lat": 1.4, "lon": 104.0, "signal": 0, "phase": "landing", "note": "Singapore Changi — landed, WiFi off"}
+      ]
+    }
+  }
+}

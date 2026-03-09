@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "Flight Mode plugin for Claude Code — resilient coding on in-flight WiFi",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "pluginRoot": "./"
   },
   "plugins": [
     {
       "name": "flight-mode",
-      "description": "Makes Claude Code resilient on unreliable in-flight WiFi with micro-task decomposition, checkpointing, and context budgeting",
-      "version": "1.0.0",
+      "description": "Makes Claude Code resilient on unreliable in-flight WiFi. Flight parsing, network detection, API geo-check, live dashboard, route connectivity timelines, micro-task decomposition, checkpointing, and context budgeting.",
+      "version": "2.0.0",
       "source": "./",
       "author": {
         "name": "RTinkslinger",

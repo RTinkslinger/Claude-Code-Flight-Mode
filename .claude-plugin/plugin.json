@@ -1,7 +1,7 @@
 {
   "name": "flight-mode",
-  "version": "1.0.0",
-  "description": "Makes Claude Code resilient on unreliable in-flight WiFi with micro-task decomposition, checkpointing, and context budgeting",
+  "version": "2.0.0",
+  "description": "Makes Claude Code resilient on unreliable in-flight WiFi. Flight parsing, network detection, API geo-check, live dashboard, route connectivity timelines, micro-task decomposition, checkpointing, and context budgeting.",
   "author": {
     "name": "RTinkslinger",
     "url": "https://github.com/RTinkslinger"

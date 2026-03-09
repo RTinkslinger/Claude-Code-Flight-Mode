@@ -1,0 +1,43 @@
+{
+  "_note": "Known airline WiFi SSID patterns for network detection. Regex patterns matched against macOS WiFi SSID.",
+  "airline_patterns": [
+    {"pattern": "gogoinflight", "provider": "gogo", "airlines": ["AA", "DL", "UA", "AS", "JL", "BA"]},
+    {"pattern": "DeltaWiFi", "provider": "gogo", "airlines": ["DL"]},
+    {"pattern": "United_WiFi", "provider": "gogo", "airlines": ["UA"]},
+    {"pattern": "AAInflight", "provider": "gogo", "airlines": ["AA"]},
+    {"pattern": "AlaskaWiFi", "provider": "gogo", "airlines": ["AS"]},
+    {"pattern": "CathayPacific", "provider": "gogo", "airlines": ["CX"]},
+    {"pattern": "JetBlue", "provider": "viasat", "airlines": ["B6"]},
+    {"pattern": "SouthwestWiFi", "provider": "starlink", "airlines": ["WN"]},
+    {"pattern": "Hawaiian", "provider": "starlink", "airlines": ["HA"]},
+    {"pattern": "AirCanada", "provider": "gogo", "airlines": ["AC"]},
+    {"pattern": "WestJet", "provider": "gogo", "airlines": ["WS"]},
+    {"pattern": "Lufthansa", "provider": "panasonic", "airlines": ["LH"]},
+    {"pattern": "FlyNet", "provider": "panasonic", "airlines": ["LH", "OS", "LX"]},
+    {"pattern": "SWISS_Connect", "provider": "panasonic", "airlines": ["LX"]},
+    {"pattern": "KLM", "provider": "viasat", "airlines": ["KL"]},
+    {"pattern": "AirFrance", "provider": "starlink", "airlines": ["AF"]},
+    {"pattern": "EmiratesWiFi", "provider": "inmarsat", "airlines": ["EK"]},
+    {"pattern": "QatarAirways", "provider": "inmarsat", "airlines": ["QR"]},
+    {"pattern": "Etihad", "provider": "panasonic", "airlines": ["EY"]},
+    {"pattern": "SingaporeAir", "provider": "panasonic", "airlines": ["SQ"]},
+    {"pattern": "Qantas", "provider": "viasat", "airlines": ["QF"]},
+    {"pattern": "VirginAtlantic", "provider": "viasat", "airlines": ["VS"]},
+    {"pattern": "TurkishAirlines", "provider": "panasonic", "airlines": ["TK"]},
+    {"pattern": "ANA-WiFi", "provider": "panasonic", "airlines": ["NH"]},
+    {"pattern": "KoreanAir", "provider": "panasonic", "airlines": ["KE"]},
+    {"pattern": "ThaiAirways", "provider": "panasonic", "airlines": ["TG"]},
+    {"pattern": "AeroflotWiFi", "provider": "panasonic", "airlines": ["SU"]},
+    {"pattern": "LATAM", "provider": "gogo", "airlines": ["LA"]},
+    {"pattern": "Iberia", "provider": "panasonic", "airlines": ["IB"]},
+    {"pattern": "SAS_Connect", "provider": "viasat", "airlines": ["SK"]}
+  ],
+  "airport_patterns": [
+    {"pattern": "Free.*WiFi", "type": "airport"},
+    {"pattern": "Airport.*WiFi", "type": "airport"},
+    {"pattern": "_Free$", "type": "airport"},
+    {"pattern": "Boingo", "type": "airport"},
+    {"pattern": "attwifi", "type": "airport"},
+    {"pattern": "Lounge", "type": "lounge"}
+  ]
+}

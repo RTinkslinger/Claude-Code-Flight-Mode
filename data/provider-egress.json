@@ -1,0 +1,82 @@
+{
+  "_note": "Satellite provider egress routing data. From research: 'GEO to LEO: First Look Into Starlink In-Flight Connectivity' (IMC 2025) and Anthropic geo-restriction docs.",
+  "providers": {
+    "gogo": {
+      "name": "Gogo / Intelsat",
+      "orbit": "GEO + ATG",
+      "egress_countries": ["US"],
+      "risk": "low",
+      "api_safe": true,
+      "notes": "ATG (air-to-ground) in North America, Ku-band GEO satellite globally. Traffic consistently egresses via US ground stations.",
+      "latency_ms": "500-1000",
+      "asn": "AS22351"
+    },
+    "inmarsat": {
+      "name": "Inmarsat / Viasat (GX Aviation)",
+      "orbit": "GEO + HEO",
+      "egress_countries": ["GB", "US"],
+      "risk": "low",
+      "api_safe": true,
+      "notes": "GX gateways in Staines (UK) and Greenwich (US). HEO satellites (GX10) for Arctic coverage launching mid-2026.",
+      "latency_ms": "600-800",
+      "asn": "AS31515"
+    },
+    "viasat": {
+      "name": "Viasat",
+      "orbit": "GEO",
+      "egress_countries": ["US", "GB", "DE", "FR"],
+      "risk": "low",
+      "api_safe": true,
+      "notes": "Bent-pipe architecture with regional egress. PoPs at DE-CIX Frankfurt, LINX London, US IXPs.",
+      "latency_ms": "600-900",
+      "asn": "AS7155"
+    },
+    "panasonic": {
+      "name": "Panasonic Avionics",
+      "orbit": "multi-orbit",
+      "egress_countries": ["US", "mixed"],
+      "risk": "medium",
+      "api_safe": true,
+      "notes": "Integrator using ESA multi-orbit terminals. Primary PoP in Lake Forest, US. Some Asian routes may egress regionally.",
+      "latency_ms": "600-1000",
+      "asn": "AS64294"
+    },
+    "starlink": {
+      "name": "SpaceX Starlink Aviation",
+      "orbit": "LEO",
+      "egress_countries": ["GB", "DE", "IT", "JP", "QA", "BG"],
+      "risk": "high",
+      "api_safe": "variable",
+      "notes": "ISL (inter-satellite laser) routing can egress on a different continent. Transpacific flights observed egressing in Frankfurt. Egress may change mid-flight. London/Frankfurt have best peering; Milan/Sofia rely on transit.",
+      "latency_ms": "20-50",
+      "asn": "AS14593",
+      "ptr_pattern": "customer.{pop}.isp.starlink.com"
+    },
+    "ses": {
+      "name": "SES O3b mPOWER",
+      "orbit": "MEO",
+      "egress_countries": ["regional"],
+      "risk": "medium",
+      "api_safe": true,
+      "notes": "Managed gateways with Azure DC adjacencies. ~150ms satellite latency. Regional landing per gateway.",
+      "latency_ms": "150-300",
+      "asn": "SES Networks"
+    },
+    "none": {
+      "name": "No WiFi",
+      "orbit": "n/a",
+      "egress_countries": [],
+      "risk": "n/a",
+      "api_safe": false,
+      "notes": "Airline does not offer WiFi (e.g., Ryanair, easyJet, Wizz Air, budget Asian carriers)."
+    },
+    "unknown": {
+      "name": "Unknown Provider",
+      "orbit": "unknown",
+      "egress_countries": ["unknown"],
+      "risk": "medium",
+      "api_safe": "unknown",
+      "notes": "WiFi provider not identified. Run /flight-check to test API availability."
+    }
+  }
+}

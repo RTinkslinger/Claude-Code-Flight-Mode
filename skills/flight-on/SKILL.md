@@ -3,52 +3,132 @@ name: flight-on
 description: Activate flight mode for resilient coding on unreliable in-flight WiFi. Use when the user is about to work on a flight or mentions airplane WiFi.
 argument-hint: [airline route]
 user-invocable: true
-allowed-tools: Read, Write, Edit, Bash, Grep, Glob
+allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Agent
 ---
 
 # Flight Mode — Activation Protocol
 
 You are activating **flight mode** — a behavioral shift that makes you resilient on unreliable in-flight WiFi. This protocol changes HOW you think, plan, and execute. Every API call might be the last one that gets through.
 
-## Step 1: Gather Flight Info
+## Step 1: Parse Flight Input
 
-Ask the user (or parse from `$ARGUMENTS`):
-- **Airline** (e.g., "Cathay Pacific", "Delta", "United")
-- **Route** (e.g., "HKG-LAX", "JFK-LHR", "SFO-NRT")
-- **What they want to work on** (can ask this now or after showing the rating)
+Run the flight parser with the user's input from `$ARGUMENTS`:
 
-If the user provided arguments like `/flight-on Delta JFK-LHR`, parse them directly.
+```bash
+echo '{"input": "$ARGUMENTS", "plugin_dir": "${CLAUDE_PLUGIN_ROOT}"}' | bash "${CLAUDE_PLUGIN_ROOT}/scripts/parse-flight.sh"
+```
 
-## Step 2: Look Up WiFi Profile
+The script accepts flexible input formats: "CX884", "CX HKG-LAX", "Cathay Pacific", "cathay hong kong to los angeles", "HKG-LAX", or natural language.
+
+Handle the output:
+- If `needs_route` is true: ask the user for origin-destination
+- If `confidence` is "none" or `airline_code` is null: ask the user to provide flight details (airline and route)
+- If only an airline was parsed (no route): ask the user for the route
+
+## Step 2: Detect Network
+
+Run network detection:
+
+```bash
+echo '{"plugin_dir": "${CLAUDE_PLUGIN_ROOT}"}' | bash "${CLAUDE_PLUGIN_ROOT}/scripts/network-detect.sh"
+```
+
+Interpret the result by `type`:
+
+- **`airline`** — On in-flight WiFi. Cross-reference the detected provider with the airline parsed in Step 1.
+- **`airport`** — Warn the user: they are on airport WiFi, which routes through the local country and may not support Claude API (geo-blocking risk).
+- **`other`** or **`none`** — Likely not on flight WiFi yet. Proceed with setup — they may connect later or be activating before takeoff.
+
+## Step 3: Flight Check (API Availability)
+
+Run the API availability check:
+
+```bash
+echo '{"plugin_dir": "${CLAUDE_PLUGIN_ROOT}"}' | bash "${CLAUDE_PLUGIN_ROOT}/scripts/flight-check.sh"
+```
+
+Show the user the verdict: **GO**, **CAUTION**, **BLOCKED**, or **OFFLINE**.
+
+- **GO** — API is reachable, no issues detected.
+- **CAUTION** — API is reachable but with warnings (latency, intermittent drops). Proceed carefully.
+- **BLOCKED** — API is unreachable due to geo-blocking. Explain the issue:
+  - The airline's WiFi provider routes traffic through a country where Claude API is not available.
+  - **VPN workaround:** OpenVPN over TCP port 443 mimics HTTPS traffic and works through most airline firewalls. L2TP/IPSec will fail because airlines block non-HTTP protocols.
+- **OFFLINE** — No network connectivity at all. Proceed with flight mode activation anyway — the user will connect later.
+
+If there are warnings in the output, save them for display in Step 6.
+
+## Step 4: Determine WiFi Rating & Timing
 
 Read the airline WiFi profiles:
 ```
 ${CLAUDE_PLUGIN_ROOT}/data/flight-profiles.md
 ```
 
-**Read ONLY the Quick Lookup Table and Route Patterns sections** (stop before "Detailed Carrier Profiles"). Find the carrier in the table. If not found, use the UNKNOWN/Default row (USABLE rating).
+**Read ONLY the Quick Lookup Table and Route Patterns sections** (stop before "Detailed Carrier Profiles").
 
-Cross-reference with the Route Patterns table — if the route type suggests a worse rating than the carrier default, use the worse rating. For example: a GOOD carrier on a polar route might degrade to CHOPPY.
+Using the airline from Step 1:
+1. Find the carrier in the lookup table. If not found, use the UNKNOWN/Default row (USABLE rating).
+2. Cross-reference with Route Patterns — if the route type suggests a worse rating than the carrier default, use the worse rating.
 
 Determine:
 - **WiFi Rating**: EXCELLENT, GOOD, USABLE, CHOPPY, POOR, or UNKNOWN
 - **Stable Window**: expected minutes of continuous connectivity
 - **Key Note**: any carrier-specific gotchas
 
-## Step 3: Show Rating & Calibration
+Ask the user for **takeoff time** if not already provided (needed for the timeline). If the network detection in Step 2 showed airline WiFi, infer takeoff was recent and ask the user to confirm.
 
-Tell the user what to expect:
+Calculate flight duration by matching the route to the closest corridor in:
+```
+${CLAUDE_PLUGIN_ROOT}/data/route-corridors.json
+```
+
+## Step 5: Start Dashboard
+
+Start the dashboard server:
+```bash
+echo '{"command":"start","plugin_dir":"${CLAUDE_PLUGIN_ROOT}"}' | bash "${CLAUDE_PLUGIN_ROOT}/scripts/dashboard-server.sh"
+```
+
+Write route data to the dashboard:
+```bash
+echo '{"command":"write-route","data":{"flight_code":"[CODE]","airline_name":"[NAME]","route":"[ORIG]-[DEST]","provider":"[PROVIDER]","rating":"[RATING]","duration_hours":[N],"takeoff_time":"[ISO8601]","waypoints":[...],"weak_zone":{...}},"plugin_dir":"${CLAUDE_PLUGIN_ROOT}"}' | bash "${CLAUDE_PLUGIN_ROOT}/scripts/dashboard-server.sh"
+```
+
+Populate the route data from:
+- Step 1 (flight code, airline name, route)
+- Step 2 (provider)
+- Step 4 (rating, duration, weak zone timing)
+- `${CLAUDE_PLUGIN_ROOT}/data/route-corridors.json` (waypoints, closest corridor match)
+
+Tell the user the dashboard is available at **http://localhost:8234**.
+
+## Step 6: Show Summary & Confirm
+
+Present a unified summary combining all gathered data:
 
 ```
-Flight Mode: [Airline] [Route]
-WiFi Rating: [RATING]
-Stable Window: ~[X-Y] min between drops
-[Key Note if relevant]
+Flight Mode: [Airline] [Flight Code]
+Route: [Origin] -> [Destination] (~[duration]h)
+WiFi: [Provider] · Rating: [RATING]
+API Status: [GO/CAUTION/BLOCKED/OFFLINE] via [egress country]
+Dashboard: http://localhost:8234
 
 Calibration:
-- Micro-task batch: [1-5 depending on rating]
-- Checkpoint every: [1-5 tasks]
-- Git commit every: [1-5 tasks]
+- Micro-task batch: [N]
+- Checkpoint every: [N] tasks
+- Git commit every: [N] tasks
+
+[If weak zone exists:]
+Connectivity Timeline:
+  Hours 0-[X]: Strong signal
+  Hours [X]-[Y]: WEAK ZONE — [reason]
+  Hours [Y]-[Z]: Signal recovery
+
+[If any warnings from Step 3:]
+Warnings: [warning text]
+
+Activate flight mode? (y/n)
 ```
 
 Use this calibration table:
@@ -62,17 +142,23 @@ Use this calibration table:
 | POOR | 1, minimal reads | After every task | After every task |
 | UNKNOWN | 1-2 at a time | Every 2-3 tasks | Every 2-3 tasks |
 
-## Step 4: Create FLIGHT_MODE.md
+## Step 7: Activate (Create FLIGHT_MODE.md + .flight-state.md)
 
 Write `FLIGHT_MODE.md` in the repo root. This file's existence = flight mode is ON. Its content provides the condensed protocol for session recovery.
 
 ```markdown
 # Flight Mode Active
 
-**Airline:** [airline] [route]
-**WiFi Rating:** [RATING] (drops expected every ~[X-Y] min)
+**Airline:** [airline] [flight code]
+**Route:** [origin] -> [destination] (~[duration]h)
+**WiFi:** [provider] · Rating: [RATING]
+**API Status:** [GO/CAUTION/BLOCKED/OFFLINE] via [egress country]
 **Activated:** [YYYY-MM-DD HH:MM]
 **Stable Window:** [X-Y] min
+**Dashboard:** http://localhost:8234
+
+[If weak zone exists:]
+**Weak Zone:** Hours [X]-[Y] — [reason]
 
 ## Condensed Protocol (for session recovery)
 
@@ -85,16 +171,16 @@ Write `FLIGHT_MODE.md` in the repo root. This file's existence = flight mode is 
 7. **Every edit must be self-contained** — never leave files in an inconsistent state
 ```
 
-## Step 4b: Create Initial .flight-state.md
-
-Create a minimal `.flight-state.md` immediately — this ensures recovery works even if the session is killed before task decomposition:
+Create the initial `.flight-state.md`:
 
 ```markdown
 # Flight State
 
 **Session started:** [YYYY-MM-DD HH:MM]
-**Airline:** [airline] [route]
-**WiFi rating:** [RATING] (drops expected every ~[X-Y] min)
+**Airline:** [airline] [flight code]
+**Route:** [origin] -> [destination] (~[duration]h)
+**WiFi:** [provider] · Rating: [RATING]
+**API Status:** [GO/CAUTION/BLOCKED/OFFLINE]
 **Project:** [repo name or cwd basename]
 
 ## Current Task
@@ -113,11 +199,9 @@ Flight mode activated. Awaiting task assignment.
 If this session dropped: Flight mode is active but no task was assigned yet. Ask the user what they want to work on.
 ```
 
-This file will be **replaced** with the full version in Step 7 once micro-tasks are defined.
+## Step 8: Check .gitignore & Begin
 
-## Step 5: Check .gitignore
-
-Check if the repo has a `.gitignore`. If it exists, check whether `FLIGHT_MODE.md` and `.flight-state.md` are listed. If not, tell the user:
+**Check .gitignore:** If the repo has a `.gitignore`, check whether `FLIGHT_MODE.md` and `.flight-state.md` are listed. If not, tell the user:
 
 ```
 Note: FLIGHT_MODE.md and .flight-state.md are runtime files.
@@ -132,29 +216,27 @@ Want me to add these? (y/n)
 
 If the user agrees, append them. If the user declines or there's no `.gitignore`, proceed — these files are harmless if committed.
 
-## Step 6: Get the Task
-
-If the user hasn't already said what they want to work on, ask:
+**Get the task:** If the user hasn't already said what they want to work on, ask:
 
 ```
 What do you want to work on this flight?
 ```
 
-## Step 7: Decompose into Micro-Tasks
-
-Break the user's request into numbered micro-tasks. Each micro-task should be:
+**Decompose into micro-tasks:** Break the user's request into numbered micro-tasks. Each micro-task should be:
 - **1-2 tool calls maximum** (one read + one edit, or one edit + one commit)
 - **Self-contained** — if the session drops after this task, the codebase is in a valid state
 - **Ordered by dependency** — earlier tasks don't depend on later ones
 
-**Replace** the initial `.flight-state.md` (created in Step 4b) with the full version:
+**Replace** the initial `.flight-state.md` with the full version:
 
 ```markdown
 # Flight State
 
 **Session started:** [YYYY-MM-DD HH:MM]
-**Airline:** [airline] [route]
-**WiFi rating:** [RATING] (drops expected every ~[X-Y] min)
+**Airline:** [airline] [flight code]
+**Route:** [origin] -> [destination] (~[duration]h)
+**WiFi:** [provider] · Rating: [RATING]
+**API Status:** [GO/CAUTION/BLOCKED/OFFLINE]
 **Project:** [repo name or description]
 
 ## Current Task
@@ -188,9 +270,7 @@ Here's the plan ([N] micro-tasks, checkpointing every [M]):
 Ready to start?
 ```
 
-## Step 8: Begin Work
-
-Once confirmed, start micro-task 1. Follow the behavioral rules below for every task.
+**Begin work:** Once confirmed, start micro-task 1. Follow the behavioral rules below for every task.
 
 ---
 

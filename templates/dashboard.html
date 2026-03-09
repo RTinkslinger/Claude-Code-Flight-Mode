@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flight Mode Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--bg:#0a0e17;--card:#0f172a;--border:#1e293b;--cyan:#38bdf8;--green:#22c55e;--yellow:#eab308;--orange:#f97316;--red:#ef4444;--gray:#6b7280;--text:#e2e8f0;--muted:#94a3b8;--dim:#475569}
+  body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;padding:16px 24px}
+  .header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-bottom:16px;border-bottom:1px solid var(--border);margin-bottom:20px}
+  .header-left{display:flex;align-items:center;gap:16px}
+  .flight-code{font-size:28px;font-weight:700;color:var(--cyan);letter-spacing:2px}
+  .route-info{font-size:13px;color:var(--muted)}
+  .route-info span{color:var(--text)}
+  .badge{display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+  .badge-excellent{background:#22c55e22;color:var(--green);border:1px solid var(--green)}
+  .badge-usable{background:#eab30822;color:var(--yellow);border:1px solid var(--yellow)}
+  .badge-poor{background:#ef444422;color:var(--red);border:1px solid var(--red)}
+  .badge-limited{background:#f9731622;color:var(--orange);border:1px solid var(--orange)}
+  .header-right{display:flex;align-items:center;gap:20px;font-size:12px;color:var(--muted)}
+  .elapsed{font-size:20px;font-weight:700;color:var(--cyan);font-variant-numeric:tabular-nums}
+  .refresh-dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .charts{display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:16px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px}
+  .card-title{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);margin-bottom:12px}
+  svg{width:100%;display:block}
+  .status-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+  .status-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px}
+  .status-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);margin-bottom:6px}
+  .status-value{font-size:16px;font-weight:700}
+  .status-sub{font-size:11px;color:var(--muted);margin-top:4px}
+  .go{color:var(--green)}.caution{color:var(--yellow)}.blocked{color:var(--red)}
+  .drop-table{width:100%;border-collapse:collapse;font-size:12px}
+  .drop-table th{text-align:left;color:var(--dim);font-size:10px;text-transform:uppercase;letter-spacing:1px;padding:8px 12px;border-bottom:1px solid var(--border)}
+  .drop-table td{padding:6px 12px;border-bottom:1px solid #1e293b44;color:var(--muted)}
+  .drop-table tr:hover td{color:var(--text)}
+  .empty-state{text-align:center;padding:24px;color:var(--dim);font-size:12px}
+  .trend-up{color:var(--red)}.trend-down{color:var(--green)}.trend-stable{color:var(--yellow)}
+  .tooltip{position:absolute;background:#1e293bee;border:1px solid var(--cyan);border-radius:4px;padding:6px 10px;font-size:11px;pointer-events:none;z-index:10;white-space:nowrap;display:none}
+  .stale-banner{background:#ef444422;border:1px solid var(--red);border-radius:6px;padding:8px 16px;font-size:12px;color:var(--red);text-align:center;margin-bottom:12px;display:none}
+  @media(max-width:768px){.status-row{grid-template-columns:repeat(2,1fr)}.header{flex-direction:column;align-items:flex-start}}
+</style>
+</head>
+<body>
+<div class="stale-banner" id="staleBanner">CONNECTION LOST — Last update: <span id="staleAge">?</span>s ago</div>
+<div class="header">
+  <div class="header-left">
+    <div class="flight-code" id="flightCode">----</div>
+    <div>
+      <div class="route-info"><span id="routeStr">--- → ---</span></div>
+      <div class="route-info" style="margin-top:2px"><span id="airlineName">—</span> · <span id="providerName">—</span></div>
+    </div>
+    <div id="ratingBadge" class="badge badge-usable">—</div>
+  </div>
+  <div class="header-right">
+    <div><span class="refresh-dot" id="refreshDot"></span> auto-refresh 10s</div>
+    <div>Elapsed <span class="elapsed" id="elapsedTime">00:00:00</span></div>
+  </div>
+</div>
+
+<div class="charts">
+  <div class="card">
+    <div class="card-title">Connectivity Timeline</div>
+    <div style="position:relative" id="timelineWrap">
+      <svg id="timelineSvg" viewBox="0 0 900 220" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Live Latency <span id="latencyTrend" style="margin-left:8px"></span></div>
+    <svg id="latencySvg" viewBox="0 0 900 160" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+</div>
+
+<div class="status-row">
+  <div class="status-card">
+    <div class="status-label">API Status</div>
+    <div class="status-value" id="apiStatus">—</div>
+    <div class="status-sub" id="egressInfo">—</div>
+  </div>
+  <div class="status-card">
+    <div class="status-label">Current Phase</div>
+    <div class="status-value" id="currentPhase">—</div>
+    <div class="status-sub" id="phaseSignal">—</div>
+  </div>
+  <div class="status-card">
+    <div class="status-label">Next Event</div>
+    <div class="status-value" id="nextEvent">—</div>
+    <div class="status-sub" id="nextEventSub">—</div>
+  </div>
+  <div class="status-card">
+    <div class="status-label">Session Stats</div>
+    <div class="status-value" id="sessionStats">—</div>
+    <div class="status-sub" id="sessionSub">—</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">Drop Log</div>
+  <table class="drop-table">
+    <thead><tr><th>Time</th><th>Duration</th><th>Peak Latency</th><th>Packet Loss</th></tr></thead>
+    <tbody id="dropBody"><tr><td colspan="4" class="empty-state">No drops detected</td></tr></tbody>
+  </table>
+</div>
+
+<div id="tooltip" class="tooltip"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+let routeData = null, liveData = null, lastFetchOk = 0;
+const P = {left:60, right:30, top:20, bottom:30, w:900, h:220};
+const LP = {left:60, right:30, top:10, bottom:30, w:900, h:160};
+
+function signalColor(s) {
+  if (s >= 75) return '#22c55e';
+  if (s >= 55) return '#eab308';
+  if (s >= 30) return '#f97316';
+  if (s > 0) return '#ef4444';
+  return '#6b7280';
+}
+
+function ratingClass(r) {
+  const m = {EXCELLENT:'badge-excellent',USABLE:'badge-usable',LIMITED:'badge-limited',POOR:'badge-poor'};
+  return m[r] || 'badge-usable';
+}
+
+function statusClass(s) {
+  return s === 'GO' ? 'go' : s === 'CAUTION' ? 'caution' : 'blocked';
+}
+
+function fmtTime(sec) {
+  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = Math.floor(sec%60);
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function elapsedHours() {
+  if (!routeData) return 0;
+  return (Date.now() - new Date(routeData.takeoff_time).getTime()) / 3600000;
+}
+
+function renderHeader() {
+  if (!routeData) return;
+  const d = routeData;
+  $('flightCode').textContent = d.flight;
+  $('routeStr').textContent = d.route.replace('-', ' → ');
+  $('airlineName').textContent = d.airline;
+  $('providerName').textContent = d.provider;
+  const b = $('ratingBadge');
+  b.textContent = d.rating;
+  b.className = 'badge ' + ratingClass(d.rating);
+}
+
+function renderTimeline() {
+  if (!routeData) return;
+  const svg = $('timelineSvg');
+  const wp = routeData.waypoints;
+  const dur = routeData.duration_hours;
+  const wz = routeData.weak_zone;
+  const cx = P.left, cy = P.top, cw = P.w - P.left - P.right, ch = P.h - P.top - P.bottom;
+  const xScale = h => cx + (h / dur) * cw;
+  const yScale = s => cy + ch - (s / 100) * ch;
+
+  let html = '';
+  // Background zones
+  const zones = [{min:75,max:100,c:'#22c55e'},{min:55,max:75,c:'#eab308'},{min:30,max:55,c:'#f97316'},{min:0,max:30,c:'#ef4444'}];
+  zones.forEach(z => {
+    html += `<rect x="${cx}" y="${yScale(z.max)}" width="${cw}" height="${yScale(z.min)-yScale(z.max)}" fill="${z.c}" opacity="0.06"/>`;
+  });
+
+  // Weak zone overlay
+  if (wz) {
+    const wx = xScale(wz.start_hour), wx2 = xScale(wz.end_hour);
+    html += `<rect x="${wx}" y="${cy}" width="${wx2-wx}" height="${ch}" fill="#ef4444" opacity="0.08" rx="4"/>`;
+    html += `<text x="${(wx+wx2)/2}" y="${cy+12}" text-anchor="middle" fill="#ef4444" font-size="9" opacity="0.7">WEAK ZONE</text>`;
+  }
+
+  // Grid lines + Y labels
+  [0,25,50,75,100].forEach(v => {
+    const y = yScale(v);
+    html += `<line x1="${cx}" y1="${y}" x2="${cx+cw}" y2="${y}" stroke="#1e293b" stroke-width="0.5"/>`;
+    html += `<text x="${cx-8}" y="${y+3}" text-anchor="end" fill="#475569" font-size="9">${v}%</text>`;
+  });
+
+  // X labels
+  for (let h = 0; h <= dur; h += Math.max(1, Math.floor(dur/10))) {
+    html += `<text x="${xScale(h)}" y="${cy+ch+16}" text-anchor="middle" fill="#475569" font-size="9">${h}h</text>`;
+  }
+
+  // Signal line
+  if (wp.length > 1) {
+    const pts = wp.map(w => `${xScale(w.hour)},${yScale(w.signal)}`).join(' ');
+    html += `<polyline points="${pts}" fill="none" stroke="${'#38bdf8'}" stroke-width="2" stroke-linejoin="round"/>`;
+    // Gradient fill under line
+    const fillPts = `${xScale(wp[0].hour)},${yScale(0)} ${pts} ${xScale(wp[wp.length-1].hour)},${yScale(0)}`;
+    html += `<polygon points="${fillPts}" fill="url(#lineGrad)" opacity="0.15"/>`;
+    html += `<defs><linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#38bdf800"/></linearGradient></defs>`;
+  }
+
+  // Waypoint dots
+  wp.forEach((w, i) => {
+    const x = xScale(w.hour), y = yScale(w.signal);
+    html += `<circle cx="${x}" cy="${y}" r="4" fill="${signalColor(w.signal)}" stroke="#0a0e17" stroke-width="1.5" data-idx="${i}" class="wp-dot"/>`;
+  });
+
+  // YOU ARE HERE marker
+  const eh = elapsedHours();
+  if (eh >= 0 && eh <= dur) {
+    const mx = xScale(eh);
+    html += `<line x1="${mx}" y1="${cy}" x2="${mx}" y2="${cy+ch}" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+    html += `<text x="${mx}" y="${cy-4}" text-anchor="middle" fill="#38bdf8" font-size="8" font-weight="700">NOW</text>`;
+    html += `<polygon points="${mx-5},${cy} ${mx+5},${cy} ${mx},${cy+6}" fill="#38bdf8"/>`;
+  }
+
+  // Axes
+  html += `<line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy+ch}" stroke="#1e293b" stroke-width="1"/>`;
+  html += `<line x1="${cx}" y1="${cy+ch}" x2="${cx+cw}" y2="${cy+ch}" stroke="#1e293b" stroke-width="1"/>`;
+
+  svg.innerHTML = html;
+
+  // Tooltip events
+  svg.querySelectorAll('.wp-dot').forEach(dot => {
+    dot.addEventListener('mouseenter', e => {
+      const w = wp[+dot.dataset.idx];
+      const tip = $('tooltip');
+      tip.innerHTML = `<strong>${w.phase}</strong><br>Hour ${w.hour} · Signal ${w.signal}%<br>Lat ${w.lat?.toFixed(1) || '?'} Lon ${w.lon?.toFixed(1) || '?'}${w.note ? '<br>' + w.note : ''}`;
+      const rect = svg.getBoundingClientRect();
+      const sx = rect.width / P.w, sy = rect.height / P.h;
+      tip.style.left = (rect.left + +dot.getAttribute('cx') * sx + 10) + 'px';
+      tip.style.top = (rect.top + +dot.getAttribute('cy') * sy - 20) + 'px';
+      tip.style.display = 'block';
+    });
+    dot.addEventListener('mouseleave', () => { $('tooltip').style.display = 'none'; });
+  });
+}
+
+function renderLatency() {
+  const svg = $('latencySvg');
+  if (!liveData || !liveData.measurements || liveData.measurements.length === 0) {
+    svg.innerHTML = `<text x="450" y="80" text-anchor="middle" fill="#475569" font-size="12">Waiting for data...</text>`;
+    $('latencyTrend').innerHTML = '';
+    return;
+  }
+
+  const ms = liveData.measurements.slice(-60);
+  const cx = LP.left, cy = LP.top, cw = LP.w - LP.left - LP.right, ch = LP.h - LP.top - LP.bottom;
+  const maxLatency = Math.max(2000, ...ms.map(m => m.http_ms || m.ping_ms));
+  const xScale = (i) => cx + (i / Math.max(1, ms.length - 1)) * cw;
+  const yScale = (v) => cy + ch - (v / maxLatency) * ch;
+
+  let html = '';
+
+  // Grid
+  const steps = [0, Math.round(maxLatency * 0.25), Math.round(maxLatency * 0.5), Math.round(maxLatency * 0.75), maxLatency];
+  steps.forEach(v => {
+    const y = yScale(v);
+    html += `<line x1="${cx}" y1="${y}" x2="${cx+cw}" y2="${y}" stroke="#1e293b" stroke-width="0.5"/>`;
+    html += `<text x="${cx-8}" y="${y+3}" text-anchor="end" fill="#475569" font-size="9">${v}ms</text>`;
+  });
+
+  // Ping line
+  if (ms.length > 1) {
+    const pingPts = ms.map((m, i) => `${xScale(i)},${yScale(m.ping_ms)}`).join(' ');
+    html += `<polyline points="${pingPts}" fill="none" stroke="#38bdf8" stroke-width="1.5" opacity="0.7"/>`;
+    const httpPts = ms.map((m, i) => `${xScale(i)},${yScale(m.http_ms)}`).join(' ');
+    html += `<polyline points="${httpPts}" fill="none" stroke="#a78bfa" stroke-width="1.5" opacity="0.7"/>`;
+  }
+
+  // Dots for latest
+  if (ms.length > 0) {
+    const last = ms[ms.length - 1];
+    const lx = xScale(ms.length - 1);
+    html += `<circle cx="${lx}" cy="${yScale(last.ping_ms)}" r="3" fill="#38bdf8"/>`;
+    html += `<circle cx="${lx}" cy="${yScale(last.http_ms)}" r="3" fill="#a78bfa"/>`;
+  }
+
+  // X labels (timestamps)
+  const labelCount = Math.min(6, ms.length);
+  for (let i = 0; i < labelCount; i++) {
+    const idx = Math.floor(i * (ms.length - 1) / Math.max(1, labelCount - 1));
+    const t = new Date(ms[idx].timestamp);
+    const label = `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
+    html += `<text x="${xScale(idx)}" y="${cy+ch+16}" text-anchor="middle" fill="#475569" font-size="9">${label}</text>`;
+  }
+
+  // Legend
+  html += `<circle cx="${cx+cw-120}" cy="${cy+6}" r="3" fill="#38bdf8"/>`;
+  html += `<text x="${cx+cw-112}" y="${cy+10}" fill="#94a3b8" font-size="9">Ping</text>`;
+  html += `<circle cx="${cx+cw-60}" cy="${cy+6}" r="3" fill="#a78bfa"/>`;
+  html += `<text x="${cx+cw-52}" y="${cy+10}" fill="#94a3b8" font-size="9">HTTP</text>`;
+
+  // Axes
+  html += `<line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy+ch}" stroke="#1e293b" stroke-width="1"/>`;
+  html += `<line x1="${cx}" y1="${cy+ch}" x2="${cx+cw}" y2="${cy+ch}" stroke="#1e293b" stroke-width="1"/>`;
+
+  svg.innerHTML = html;
+
+  // Trend indicator
+  const trend = $('latencyTrend');
+  if (ms.length >= 3) {
+    const recent = ms.slice(-3).reduce((a, m) => a + m.ping_ms, 0) / 3;
+    const older = ms.slice(-6, -3);
+    if (older.length > 0) {
+      const olderAvg = older.reduce((a, m) => a + m.ping_ms, 0) / older.length;
+      const diff = recent - olderAvg;
+      if (diff > 100) trend.innerHTML = '<span class="trend-up">&#9650; degrading</span>';
+      else if (diff < -100) trend.innerHTML = '<span class="trend-down">&#9660; improving</span>';
+      else trend.innerHTML = '<span class="trend-stable">&#9644; stable</span>';
+    } else { trend.innerHTML = ''; }
+  } else { trend.innerHTML = ''; }
+}
+
+function updateStatusCards() {
+  if (liveData) {
+    const st = liveData.api_status || '—';
+    $('apiStatus').textContent = st;
+    $('apiStatus').className = 'status-value ' + statusClass(st);
+    $('egressInfo').textContent = liveData.egress_city ? `${liveData.egress_city}, ${liveData.egress_country}` : '—';
+
+    if (liveData.session) {
+      const s = liveData.session;
+      $('sessionStats').textContent = `${s.context_pct}% ctx`;
+      $('sessionSub').textContent = `${s.tool_calls} calls · ${s.file_reads} reads`;
+    }
+  }
+
+  if (routeData) {
+    const eh = elapsedHours();
+    const wp = routeData.waypoints;
+    // Find current phase
+    let current = wp[0];
+    for (let i = wp.length - 1; i >= 0; i--) {
+      if (eh >= wp[i].hour) { current = wp[i]; break; }
+    }
+    $('currentPhase').textContent = current.phase || '—';
+    $('currentPhase').style.color = signalColor(current.signal);
+    $('phaseSignal').textContent = `Signal: ${current.signal}%${current.note ? ' · ' + current.note : ''}`;
+
+    // Next event
+    let next = null;
+    for (let i = 0; i < wp.length; i++) {
+      if (wp[i].hour > eh && wp[i].signal !== current.signal) { next = wp[i]; break; }
+    }
+    const wz = routeData.weak_zone;
+    if (wz && eh < wz.start_hour) {
+      const hoursUntil = (wz.start_hour - eh).toFixed(1);
+      $('nextEvent').textContent = `Weak in ~${hoursUntil}h`;
+      $('nextEvent').style.color = '#f97316';
+      $('nextEventSub').textContent = `Hours ${wz.start_hour}-${wz.end_hour}`;
+    } else if (wz && eh >= wz.start_hour && eh <= wz.end_hour) {
+      const hoursLeft = (wz.end_hour - eh).toFixed(1);
+      $('nextEvent').textContent = `Strong in ~${hoursLeft}h`;
+      $('nextEvent').style.color = '#22c55e';
+      $('nextEventSub').textContent = 'Currently in weak zone';
+    } else if (next) {
+      const hoursUntil = (next.hour - eh).toFixed(1);
+      $('nextEvent').textContent = `${next.phase} in ~${hoursUntil}h`;
+      $('nextEvent').style.color = signalColor(next.signal);
+      $('nextEventSub').textContent = `Signal → ${next.signal}%`;
+    } else {
+      $('nextEvent').textContent = 'Arrival';
+      $('nextEvent').style.color = '#22c55e';
+      $('nextEventSub').textContent = routeData.route.split('-')[1] || '';
+    }
+  }
+}
+
+function renderDrops() {
+  const tbody = $('dropBody');
+  if (!liveData || !liveData.drops || liveData.drops.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No drops detected</td></tr>';
+    return;
+  }
+  tbody.innerHTML = liveData.drops.map(d => {
+    const t = new Date(d.timestamp);
+    const ts = `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}:${String(t.getSeconds()).padStart(2,'0')}`;
+    return `<tr><td>${ts}</td><td>${d.duration_s || '?'}s</td><td style="color:${d.peak_latency_ms > 5000 ? '#ef4444' : '#eab308'}">${d.peak_latency_ms || '?'}ms</td><td>${d.packet_loss != null ? d.packet_loss + '%' : '?'}</td></tr>`;
+  }).join('');
+}
+
+function updateElapsed() {
+  if (!routeData) return;
+  const sec = (Date.now() - new Date(routeData.takeoff_time).getTime()) / 1000;
+  $('elapsedTime').textContent = fmtTime(Math.max(0, sec));
+}
+
+function checkStale() {
+  if (lastFetchOk === 0) return;
+  const age = Math.round((Date.now() - lastFetchOk) / 1000);
+  if (age > 30) {
+    $('staleBanner').style.display = 'block';
+    $('staleAge').textContent = age;
+    $('refreshDot').style.background = '#ef4444';
+  } else {
+    $('staleBanner').style.display = 'none';
+    $('refreshDot').style.background = '#22c55e';
+  }
+}
+
+async function fetchRoute() {
+  try {
+    const r = await fetch('route-data.json');
+    if (r.ok) { routeData = await r.json(); renderHeader(); renderTimeline(); updateStatusCards(); }
+  } catch (e) { /* WiFi down — degrade gracefully */ }
+}
+
+async function fetchLive() {
+  try {
+    const r = await fetch('live-data.json');
+    if (r.ok) {
+      liveData = await r.json();
+      lastFetchOk = Date.now();
+      renderLatency();
+      updateStatusCards();
+      renderDrops();
+    }
+  } catch (e) { /* WiFi down — degrade gracefully */ }
+}
+
+async function init() {
+  await fetchRoute();
+  await fetchLive();
+  setInterval(fetchLive, 10000);
+  setInterval(() => { updateElapsed(); checkStale(); renderTimeline(); }, 1000);
+}
+
+init();
+</script>
+</body>
+</html>
