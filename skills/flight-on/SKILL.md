@@ -85,6 +85,36 @@ Write `FLIGHT_MODE.md` in the repo root. This file's existence = flight mode is 
 7. **Every edit must be self-contained** — never leave files in an inconsistent state
 ```
 
+## Step 4b: Create Initial .flight-state.md
+
+Create a minimal `.flight-state.md` immediately — this ensures recovery works even if the session is killed before task decomposition:
+
+```markdown
+# Flight State
+
+**Session started:** [YYYY-MM-DD HH:MM]
+**Airline:** [airline] [route]
+**WiFi rating:** [RATING] (drops expected every ~[X-Y] min)
+**Project:** [repo name or cwd basename]
+
+## Current Task
+(awaiting user input)
+
+## Micro-Tasks
+(not yet decomposed)
+
+## Last Action
+Flight mode activated. Awaiting task assignment.
+
+## Files Modified This Session
+(none yet)
+
+## Recovery Instructions
+If this session dropped: Flight mode is active but no task was assigned yet. Ask the user what they want to work on.
+```
+
+This file will be **replaced** with the full version in Step 7 once micro-tasks are defined.
+
 ## Step 5: Check .gitignore
 
 Check if the repo has a `.gitignore`. If it exists, check whether `FLIGHT_MODE.md` and `.flight-state.md` are listed. If not, tell the user:
@@ -117,7 +147,7 @@ Break the user's request into numbered micro-tasks. Each micro-task should be:
 - **Self-contained** — if the session drops after this task, the codebase is in a valid state
 - **Ordered by dependency** — earlier tasks don't depend on later ones
 
-Write the decomposition to `.flight-state.md`:
+**Replace** the initial `.flight-state.md` (created in Step 4b) with the full version:
 
 ```markdown
 # Flight State

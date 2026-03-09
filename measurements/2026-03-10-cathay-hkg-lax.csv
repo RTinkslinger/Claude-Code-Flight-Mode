@@ -1,0 +1,2 @@
+timestamp,ping_avg_ms,packet_loss,http_roundtrip_s,dns_ms,download_bytes_per_sec,notes
+2026-03-09T16:43:25Z,761.112,packet,1.577612,91,527378,
