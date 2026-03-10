@@ -1,0 +1,321 @@
+{
+  "_note": "Programmatic mirror of flight-profiles.md Quick Lookup Table. Used by flight-on-lookup.sh.",
+  "profiles": {
+    "DL": {
+      "name": "Delta",
+      "rating_domestic": "GOOD",
+      "rating_longhaul": "USABLE",
+      "stable_window_domestic": "45-90",
+      "stable_window_longhaul": "20-40",
+      "note": "Upload <1 Mbps; free for SkyMiles"
+    },
+    "UA_starlink": {
+      "name": "United (Starlink)",
+      "iata": "UA",
+      "variant": "starlink",
+      "rating_domestic": "EXCELLENT",
+      "rating_longhaul": null,
+      "stable_window_domestic": "60+",
+      "stable_window_longhaul": null,
+      "note": "Check aircraft type"
+    },
+    "UA_legacy": {
+      "name": "United (legacy GEO)",
+      "iata": "UA",
+      "variant": "legacy",
+      "rating_domestic": "USABLE",
+      "rating_longhaul": "USABLE",
+      "stable_window_domestic": "20-40",
+      "stable_window_longhaul": "20-40",
+      "note": "Mainline transitioning to LEO"
+    },
+    "AA_narrowbody": {
+      "name": "American (narrowbody)",
+      "iata": "AA",
+      "variant": "narrowbody",
+      "rating_domestic": "USABLE",
+      "rating_longhaul": null,
+      "stable_window_domestic": "15-30",
+      "stable_window_longhaul": null,
+      "note": "Re-auth after device sleep"
+    },
+    "AA_widebody": {
+      "name": "American (widebody)",
+      "iata": "AA",
+      "variant": "widebody",
+      "rating_domestic": "CHOPPY",
+      "rating_longhaul": "CHOPPY",
+      "stable_window_domestic": "15-30",
+      "stable_window_longhaul": "15-30",
+      "note": "Panasonic hardware"
+    },
+    "B6": {
+      "name": "JetBlue",
+      "rating_domestic": "GOOD",
+      "rating_longhaul": null,
+      "stable_window_domestic": "30-60",
+      "stable_window_longhaul": null,
+      "note": "Free for all passengers"
+    },
+    "WN_current": {
+      "name": "Southwest (current)",
+      "iata": "WN",
+      "variant": "current",
+      "rating_domestic": "CHOPPY",
+      "rating_longhaul": null,
+      "stable_window_domestic": "10-20",
+      "stable_window_longhaul": null,
+      "note": "Starlink rollout mid-2026"
+    },
+    "WN_starlink": {
+      "name": "Southwest (Starlink)",
+      "iata": "WN",
+      "variant": "starlink",
+      "rating_domestic": "EXCELLENT",
+      "rating_longhaul": null,
+      "stable_window_domestic": "60+",
+      "stable_window_longhaul": null,
+      "note": "From mid-2026"
+    },
+    "AS": {
+      "name": "Alaska (legacy)",
+      "rating_domestic": "CHOPPY",
+      "rating_longhaul": null,
+      "stable_window_domestic": "15-30",
+      "stable_window_longhaul": null,
+      "note": "Starlink installs underway"
+    },
+    "AC": {
+      "name": "Air Canada",
+      "rating_domestic": "GOOD",
+      "rating_longhaul": "USABLE",
+      "stable_window_domestic": "30-60",
+      "stable_window_longhaul": "30-60",
+      "note": "Free for Aeroplan members"
+    },
+    "NK": {
+      "name": "Spirit",
+      "rating_domestic": "GOOD",
+      "rating_longhaul": null,
+      "stable_window_domestic": "30-60",
+      "stable_window_longhaul": null,
+      "note": "SES-17 satellite; $18"
+    },
+    "F9": {
+      "name": "Frontier",
+      "rating_domestic": "POOR",
+      "rating_longhaul": null,
+      "stable_window_domestic": null,
+      "stable_window_longhaul": null,
+      "note": "No WiFi currently"
+    },
+    "AF": {
+      "name": "Air France",
+      "rating_domestic": "EXCELLENT",
+      "rating_longhaul": "EXCELLENT",
+      "stable_window_domestic": "60+",
+      "stable_window_longhaul": "60+",
+      "note": "Starlink fleet; free Flying Blue"
+    },
+    "KL": {
+      "name": "KLM",
+      "rating_domestic": "GOOD",
+      "rating_longhaul": null,
+      "stable_window_domestic": "30-60",
+      "stable_window_longhaul": null,
+      "note": "European routes; free Flying Blue"
+    },
+    "LH_legacy": {
+      "name": "Lufthansa (legacy)",
+      "iata": "LH",
+      "variant": "legacy",
+      "rating_domestic": "CHOPPY",
+      "rating_longhaul": "CHOPPY",
+      "stable_window_domestic": "10-20",
+      "stable_window_longhaul": "10-20",
+      "note": "Hardware lottery"
+    },
+    "LH_starlink": {
+      "name": "Lufthansa (Starlink)",
+      "iata": "LH",
+      "variant": "starlink",
+      "rating_domestic": "EXCELLENT",
+      "rating_longhaul": "EXCELLENT",
+      "stable_window_domestic": "60+",
+      "stable_window_longhaul": "60+",
+      "note": "Limited fleet until 2029"
+    },
+    "EY_amara": {
+      "name": "Etihad (Amara)",
+      "iata": "EY",
+      "variant": "amara",
+      "rating_domestic": "GOOD",
+      "rating_longhaul": "GOOD",
+      "stable_window_domestic": "30-45",
+      "stable_window_longhaul": "30-45",
+      "note": "New aircraft solid"
+    },
+    "EY_legacy": {
+      "name": "Etihad (legacy)",
+      "iata": "EY",
+      "variant": "legacy",
+      "rating_domestic": "USABLE",
+      "rating_longhaul": "USABLE",
+      "stable_window_domestic": "20-40",
+      "stable_window_longhaul": "20-40",
+      "note": "Reliability complaints"
+    },
+    "EK": {
+      "name": "Emirates",
+      "rating_domestic": "USABLE",
+      "rating_longhaul": "USABLE",
+      "stable_window_domestic": "20-40",
+      "stable_window_longhaul": "20-40",
+      "note": "Premium tier needed for API"
+    },
+    "QR": {
+      "name": "Qatar",
+      "rating_domestic": "USABLE",
+      "rating_longhaul": "USABLE",
+      "stable_window_domestic": "20-40",
+      "stable_window_longhaul": "20-40",
+      "note": "Varies by aircraft type"
+    },
+    "CX": {
+      "name": "Cathay Pacific",
+      "rating_domestic": "USABLE",
+      "rating_longhaul": "USABLE",
+      "stable_window_domestic": "20-40",
+      "stable_window_longhaul": "20-40",
+      "note": "600-900ms latency; 1-2 drops/flight"
+    },
+    "SQ": {
+      "name": "Singapore Airlines",
+      "rating_domestic": "USABLE",
+      "rating_longhaul": "USABLE",
+      "stable_window_domestic": "20-40",
+      "stable_window_longhaul": "20-40",
+      "note": "Workable; premium cabin complimentary"
+    },
+    "NH_viasat": {
+      "name": "ANA (767 Viasat)",
+      "iata": "NH",
+      "variant": "viasat",
+      "rating_domestic": "GOOD",
+      "rating_longhaul": null,
+      "stable_window_domestic": "30-60",
+      "stable_window_longhaul": null,
+      "note": "Free all classes"
+    },
+    "NH_legacy": {
+      "name": "ANA (777 long-haul)",
+      "iata": "NH",
+      "variant": "legacy",
+      "rating_domestic": "CHOPPY",
+      "rating_longhaul": "CHOPPY",
+      "stable_window_domestic": "10-20",
+      "stable_window_longhaul": "10-20",
+      "note": "Hour-long blackouts possible"
+    },
+    "TG_nsg": {
+      "name": "Thai Airways (NSG)",
+      "iata": "TG",
+      "variant": "nsg",
+      "rating_domestic": "GOOD",
+      "rating_longhaul": "GOOD",
+      "stable_window_domestic": "30-60",
+      "stable_window_longhaul": "30-60",
+      "note": "Multi-orbit pioneer"
+    },
+    "TG_legacy": {
+      "name": "Thai Airways (legacy)",
+      "iata": "TG",
+      "variant": "legacy",
+      "rating_domestic": "CHOPPY",
+      "rating_longhaul": "CHOPPY",
+      "stable_window_domestic": "10-20",
+      "stable_window_longhaul": "10-20",
+      "note": "Un-upgraded fleet"
+    },
+    "AI": {
+      "name": "Air India",
+      "rating_domestic": "USABLE",
+      "rating_longhaul": "USABLE",
+      "stable_window_domestic": "20-40",
+      "stable_window_longhaul": "20-40",
+      "note": "Portal login finicky"
+    },
+    "6E": {
+      "name": "IndiGo",
+      "rating_domestic": "POOR",
+      "rating_longhaul": null,
+      "stable_window_domestic": null,
+      "stable_window_longhaul": null,
+      "note": "No WiFi until late 2025"
+    },
+    "FR": {
+      "name": "Ryanair",
+      "rating_domestic": "POOR",
+      "rating_longhaul": null,
+      "stable_window_domestic": null,
+      "stable_window_longhaul": null,
+      "note": "No viable WiFi"
+    },
+    "U2": {
+      "name": "easyJet",
+      "rating_domestic": "POOR",
+      "rating_longhaul": null,
+      "stable_window_domestic": null,
+      "stable_window_longhaul": null,
+      "note": "No viable WiFi"
+    },
+    "W6": {
+      "name": "Wizz Air",
+      "rating_domestic": "POOR",
+      "rating_longhaul": null,
+      "stable_window_domestic": null,
+      "stable_window_longhaul": null,
+      "note": "No viable WiFi"
+    },
+    "ASIAN_LCC": {
+      "name": "Asian LCCs",
+      "iata": null,
+      "variant": "group",
+      "rating_domestic": "POOR",
+      "rating_longhaul": "POOR",
+      "stable_window_domestic": null,
+      "stable_window_longhaul": null,
+      "note": "Not reliable for API work"
+    }
+  },
+  "variant_airlines": {
+    "_note": "IATA codes that have multiple hardware variants. Lookup scripts should prompt for variant when these codes are used.",
+    "UA": ["UA_starlink", "UA_legacy"],
+    "AA": ["AA_narrowbody", "AA_widebody"],
+    "WN": ["WN_current", "WN_starlink"],
+    "LH": ["LH_legacy", "LH_starlink"],
+    "EY": ["EY_amara", "EY_legacy"],
+    "NH": ["NH_viasat", "NH_legacy"],
+    "TG": ["TG_nsg", "TG_legacy"]
+  },
+  "default": {
+    "name": "Unknown Carrier",
+    "rating_domestic": "USABLE",
+    "rating_longhaul": "USABLE",
+    "stable_window_domestic": "20-40",
+    "stable_window_longhaul": "20-40",
+    "note": "Unknown carrier — using conservative defaults"
+  },
+  "calibration": {
+    "EXCELLENT": {"batch_size": "up to 5", "checkpoint_interval": "4-5", "commit_interval": "4-5"},
+    "GOOD":      {"batch_size": "up to 3", "checkpoint_interval": "3-4", "commit_interval": "3-4"},
+    "USABLE":    {"batch_size": "1-2", "checkpoint_interval": "2-3", "commit_interval": "2-3"},
+    "CHOPPY":    {"batch_size": "1", "checkpoint_interval": "1-2", "commit_interval": "1-2"},
+    "POOR":      {"batch_size": "1, minimal reads", "checkpoint_interval": "1", "commit_interval": "1"},
+    "UNKNOWN":   {"batch_size": "1-2", "checkpoint_interval": "2-3", "commit_interval": "2-3"}
+  },
+  "route_type_thresholds": {
+    "_note": "Duration thresholds to classify domestic vs long-haul.",
+    "domestic_max_hours": 6
+  }
+}
