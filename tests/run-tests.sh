@@ -452,9 +452,9 @@ else
   fail "T8.11 non-interactive squash" "not found in flight-off"
 fi
 
-# T8.12: flight-on has calibration table for all ratings
+# T8.12: calibration table exists for all ratings (in airline-profiles.json since v2.1)
 for RATING in "EXCELLENT" "GOOD" "USABLE" "CHOPPY" "POOR" "UNKNOWN"; do
-  if grep -q "| $RATING" "$PLUGIN_DIR/skills/flight-on/SKILL.md"; then
+  if jq -e ".calibration.\"$RATING\"" "$PLUGIN_DIR/data/airline-profiles.json" > /dev/null 2>&1; then
     pass "T8.12 calibration table has $RATING"
   else
     fail "T8.12 calibration for $RATING" "missing from table"
