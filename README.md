@@ -12,6 +12,38 @@ Flight Mode is a behavioral protocol, not a model switch. When activated:
 4. **Auto-recovery** — If a session drops, the next session reads the checkpoint file and resumes exactly where you left off.
 5. **Stop hook safety net** — If Claude Code exits unexpectedly, uncommitted changes are auto-committed with a `flight:` prefix.
 
+## V2 Features
+
+### Deterministic Preflight
+
+When you run `/flight-on`, a preflight orchestrator runs **before Claude sees the prompt** — no LLM drift, no skipped steps:
+
+1. **Flight parsing** — Extracts airline code, origin, destination from your input (e.g., `CX HKG-LAX` or `CX884`)
+2. **Network detection** — Identifies WiFi SSID and matches against known airline/airport networks
+3. **API geo-check** — Tests Claude API reachability, measures latency, checks egress country for geo-blocking
+4. **Route corridor matching** — Looks up flight duration, satellite coverage waypoints, and weak signal zones
+5. **Dashboard launch** — Starts a live connectivity dashboard at `http://localhost:8234`
+
+All results are injected as JSON into Claude's context. Claude then presents a summary, asks for confirmation, and activates only when you say yes.
+
+### Live Dashboard
+
+A browser-based dashboard at `http://localhost:8234` showing:
+
+- **Connectivity timeline** — SVG chart with satellite coverage waypoints along your route
+- **Weak zone overlay** — Visual indication of expected signal drops (e.g., central Pacific on transpacific flights)
+- **Live latency chart** — Real-time ping and HTTP latency during the flight
+- **Status cards** — API status, current flight phase, next event, session stats
+- **Drop log** — Table of detected connectivity drops with duration and severity
+
+### Route Corridors
+
+Pre-mapped signal coverage for common flight corridors:
+
+- US Domestic, US-Europe, Transpacific North/South, Transatlantic North/South
+- Europe-Asia, Europe-Middle East, Middle East-Asia, Oceania routes
+- Each corridor has waypoints with latitude, longitude, estimated signal strength, and phase notes
+
 ## WiFi Ratings
 
 The plugin profiles 40+ airlines and calibrates behavior to your connection:
@@ -73,17 +105,26 @@ This is optional but enables seamless session recovery across all repos.
 
 Examples:
 ```
-/flight-on Cathay Pacific HKG-LAX
-/flight-on Delta JFK-LHR
-/flight-on    (will ask for details)
+/flight-on CX HKG-LAX
+/flight-on DL JFK-LAX
+/flight-on CX884
+/flight-on              (will ask for details)
 ```
 
 Claude will:
-- Look up the airline's WiFi profile
-- Show the rating and calibration settings
-- Create `FLIGHT_MODE.md` and `.flight-state.md` in your repo
-- Ask what you want to work on
-- Decompose into micro-tasks and start working
+- Run the preflight orchestrator (parse, network detect, API check, dashboard start, route lookup)
+- Present a summary with WiFi rating, calibration, connectivity timeline, and weak zones
+- Ask **"Activate flight mode? (y/n)"** — a hard gate, nothing happens without your confirmation
+- On "y": create `FLIGHT_MODE.md` and `.flight-state.md`, check `.gitignore`, ask for your task
+- On "n": stop (dashboard stays live for reference)
+
+### Check connectivity
+
+```
+/flight-check
+```
+
+Standalone check — tests API reachability, latency, geo-IP, and network type without activating flight mode.
 
 ### Work normally
 
@@ -100,7 +141,7 @@ Just tell Claude what to do. The protocol runs in the background:
 ```
 
 Claude will:
-- Show a summary of work done
+- Show a summary of work done (tasks, files, commits)
 - Offer to squash `flight:` commits into a single clean commit
 - Archive the state file
 - Remove `FLIGHT_MODE.md`
@@ -133,38 +174,73 @@ FLIGHT_MODE.md
 
 ```
 flight-mode/
-├── .claude-plugin/plugin.json       # Plugin manifest
+├── .claude-plugin/plugin.json          # Plugin manifest (v2.0.0)
 ├── skills/
-│   ├── flight-on/SKILL.md           # Activation protocol
-│   └── flight-off/SKILL.md          # Deactivation protocol
-├── hooks/hooks.json                 # Stop + PostToolUse hooks
+│   ├── flight-on/SKILL.md              # Activation: preflight + protocol
+│   ├── flight-off/SKILL.md             # Deactivation: summary + cleanup
+│   └── flight-check/SKILL.md           # Standalone connectivity check
+├── hooks/hooks.json                    # Stop, PreToolUse, PostToolUse hooks
 ├── scripts/
-│   ├── stop-checkpoint.sh           # Auto-commit on session end
-│   └── context-monitor.sh           # Context budget tracking
-├── data/flight-profiles.md          # 40+ airline WiFi profiles
-└── templates/claude-md-snippet.md   # CLAUDE.md addition
-```
-
-## Testing
-
-```bash
-# Unit tests (74 tests)
-bash tests/run-tests.sh
-
-# Full lifecycle simulation (22 tests)
-bash tests/live-simulation.sh
+│   ├── flight-on-preflight.sh          # Orchestrator: runs all checks deterministically
+│   ├── parse-flight.sh                 # Extract airline, origin, destination from input
+│   ├── network-detect.sh               # Identify WiFi SSID and type
+│   ├── flight-check.sh                 # API reachability, latency, geo-IP
+│   ├── flight-on-lookup.sh             # Airline profile + route corridor matching
+│   ├── flight-on-activate.sh           # Create FLIGHT_MODE.md + .flight-state.md
+│   ├── dashboard-server.sh             # HTTP server for live dashboard (port 8234)
+│   ├── block-direct-flight-mode.sh     # PreToolUse hook: prevent direct FLIGHT_MODE.md writes
+│   ├── stop-checkpoint.sh              # Stop hook: auto-commit on session end
+│   ├── context-monitor.sh              # PostToolUse hook: context budget tracking
+│   └── measure-latency.sh             # Latency measurement for CSV logging
+├── data/
+│   ├── airline-profiles.json           # 40+ carrier WiFi profiles with ratings
+│   ├── airline-codes.json              # IATA code → airline name mapping
+│   ├── airport-codes.json              # IATA code → city/country mapping
+│   ├── route-corridors.json            # Pre-mapped signal coverage corridors
+│   ├── provider-egress.json            # WiFi provider → egress country mapping
+│   ├── supported-countries.json        # Claude API geo-availability
+│   ├── wifi-ssids.json                 # Known airline/airport WiFi SSIDs
+│   └── flight-profiles.md             # Compact lookup table for Claude
+├── templates/
+│   ├── dashboard.html                  # Live dashboard template (SVG charts, status cards)
+│   └── claude-md-snippet.md            # 3-line CLAUDE.md addition for users
+├── tests/
+│   ├── run-tests.sh                    # Full test suite (74 core tests)
+│   ├── test-v2-parse-flight.sh         # V2: flight parsing tests (24)
+│   ├── test-v2-network-detect.sh       # V2: network detection tests (17)
+│   ├── test-v2-flight-check.sh         # V2: API check tests (18)
+│   ├── test-v2-data-validation.sh      # V2: data file validation (25)
+│   ├── test-v2-dashboard.sh            # V2: dashboard server tests (15)
+│   └── phase3-log-capture.sh           # Live test log capture script
+└── docs/
+    ├── system-plan-v2.md               # Architecture and design
+    └── plans/                          # Sprint plans and test results
 ```
 
 ## How the protocol layers work
 
 | Layer | File | Purpose | When read |
 |---|---|---|---|
-| 1 | `/flight-on` SKILL.md | Full protocol (verbose) | Once, at activation |
+| 1 | `/flight-on` SKILL.md | Full protocol + preflight injection | Once, at activation |
 | 2 | `FLIGHT_MODE.md` | Condensed protocol (~20 lines) | On recovery |
 | 3 | `~/.claude/CLAUDE.md` snippet | "Read FLIGHT_MODE.md if it exists" | Every session start |
-| 4 | Hooks | Auto-checkpoint + context monitor | Every tool call / session end |
+| 4 | Hooks | Auto-checkpoint, context monitor, write guard | Every tool call / session end |
 
 Each layer does one job. No duplication. Hooks enforce mechanically; protocol text covers what hooks can't.
+
+## Testing
+
+```bash
+# Full test suite (173 tests)
+bash tests/run-tests.sh
+
+# V2-specific tests individually
+bash tests/test-v2-parse-flight.sh
+bash tests/test-v2-network-detect.sh
+bash tests/test-v2-flight-check.sh
+bash tests/test-v2-data-validation.sh
+bash tests/test-v2-dashboard.sh
+```
 
 ## License
 
