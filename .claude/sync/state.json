@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0",
+  "project": {
+    "name": "flight-mode",
+    "category": "tools",
+    "description": "Publishable Claude Code plugin for in-flight WiFi resilience — micro-task checkpointing, context budgeting, airline-specific profiles",
+    "repo_url": "https://github.com/RTinkslinger/Claude-Code-Flight-Mode",
+    "sub_repos": []
+  },
+  "state": {
+    "status": "active",
+    "last_session": {
+      "timestamp": "2026-03-12T15:30:00Z",
+      "summary": "Sync initialized by CC↔CAI sync system.",
+      "key_commit": "fd211c9"
+    },
+    "current_tasks": [],
+    "recent_decisions": [],
+    "blocked_on": [],
+    "next_session_priorities": [],
+    "key_files_changed_last_session": []
+  },
+  "architecture": {
+    "summary": "CC plugin with Bash hooks, JSON config, Markdown docs. Cash Build System v1.1-beta deployed with 6 hooks. Phase 1 complete, Phase 2 in progress.",
+    "stack": ["Bash", "JSON", "Markdown"],
+    "key_patterns": [
+      "CC plugin architecture",
+      "Micro-task checkpointing",
+      "Context budgeting",
+      "Airline-specific WiFi profiles",
+      "Cash Build System v1.1-beta (6 hooks)"
+    ]
+  },
+  "updated_at": "2026-03-12T15:30:00Z",
+  "updated_by": "cc"
+}
