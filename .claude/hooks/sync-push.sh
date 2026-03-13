@@ -1,16 +1,19 @@
 #!/bin/bash
-# CC↔CAI Sync: Stop hook — update state.json, append inbox status, push
+# Cross-Sync: Stop hook — update state.json, append inbox status, push
 # Type: command | Event: Stop
 #
-# Fires alongside Cash Build System stop-check.sh. Updates mechanical fields
-# in state.json, appends a status message to inbox.jsonl, and pushes to remote.
+# Fires as the LAST Stop group (after CBS and sync prompt hooks) so that
+# semantic state.json updates from prompt hooks are included in the push.
 #
 # Idempotency: Uses a push marker (.claude/sync/.last-push) to prevent
 # duplicate inbox messages when Stop fires multiple times (e.g., after
 # stop-check.sh exit 2 triggers a continue-then-retry cycle).
 #
 # Exit codes: Always 0 — sync failure never blocks session end.
-# Dependencies: jq, git
+# Dependencies: jq (required), git (required)
+
+# jq is required for state.json updates and inbox message construction
+command -v jq >/dev/null 2>&1 || exit 0
 
 INPUT=$(cat)
 CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
@@ -30,9 +33,9 @@ TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
 LAST_COMMIT_MSG=$(git log -1 --format='%s' 2>/dev/null || echo "")
 
-# Changed files (excluding sync files themselves)
+# Changed files (excluding sync files themselves — fixed string match, not regex)
 CHANGED_FILES=$(git status --porcelain 2>/dev/null \
-  | grep -v '.claude/sync/' \
+  | grep -vF '.claude/sync/' \
   | awk '{print $NF}' \
   | head -10 \
   | jq -R -s 'split("\n") | map(select(. != ""))' 2>/dev/null || echo '[]')
@@ -86,7 +89,10 @@ if [ "$SKIP_INBOX" = "false" ]; then
   date +%s > "$PUSH_MARKER"
 fi
 
-# --- Commit and push ---
+# --- Pull (rebase) then commit and push ---
+# Rebase handles append-only JSONL conflicts from concurrent writes gracefully
+git pull --rebase --quiet 2>/dev/null
+
 # Only add specific sync files (not .last-push marker)
 git add .claude/sync/state.json .claude/sync/inbox.jsonl 2>/dev/null
 
