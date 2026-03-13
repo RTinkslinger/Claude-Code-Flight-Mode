@@ -3,4 +3,9 @@ FLIGHT_MODE.md
 .flight-state.md
 .flight-state-*.md
 .flight-context.json
+
+# Claude Code — ignore local config, track shared infrastructure (sync + hooks)
+.claude/*
+!.claude/sync/
+!.claude/hooks/
 .claude/sync/.last-push
