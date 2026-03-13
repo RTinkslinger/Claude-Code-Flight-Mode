@@ -1,13 +1,13 @@
 #!/bin/bash
-# CC↔CAI Sync: SessionStart hook — pull latest state + check inbox
+# CC↔CAI Sync: SessionStart hook — pull latest sync state, check inbox
 # Type: command | Event: SessionStart | Matcher: startup
 #
-# Fires alongside Cash Build System startup hook. Pulls latest sync state
-# from remote, checks inbox for unacknowledged CAI messages, and outputs
-# a summary to Claude's context.
+# Fires alongside Cash Build System startup hook. Pulls latest .claude/sync/
+# from remote, checks inbox.jsonl for unacknowledged external messages
+# (CAI + cross-project CC), and outputs a summary for Claude to act on.
 #
-# Exit codes: Always 0 — sync failure never blocks session start.
-# Dependencies: jq, git
+# Exit codes: Always 0 (informational only, never blocks session start)
+# Output: stdout → fed to Claude as session context
 
 INPUT=$(cat)
 CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
@@ -16,39 +16,40 @@ cd "$CWD" 2>/dev/null || exit 0
 
 # Only run if sync is initialized
 [ -d ".claude/sync" ] || exit 0
-[ -f ".claude/sync/state.json" ] || exit 0
 
-# Clear push marker from previous session
+# Clear push marker from previous session (allows fresh push this session)
 rm -f ".claude/sync/.last-push"
 
-# Pull latest sync state (fast-forward only, don't block on conflicts)
-git pull --ff-only --quiet 2>/dev/null
+# Pull latest changes (quiet, non-fatal — works offline gracefully)
+git pull --quiet 2>/dev/null
 
-# Check inbox for unacknowledged CAI messages
+# Check inbox for unread external messages
 INBOX=".claude/sync/inbox.jsonl"
 [ -f "$INBOX" ] || exit 0
 
-# Find messages from CAI that haven't been acknowledged
-# An ack message has type "ack" and references the original message ID
-UNREAD=$(jq -c 'select(.source == "cai" and .type != "ack")' "$INBOX" 2>/dev/null | while read -r MSG; do
-  MSG_ID=$(echo "$MSG" | jq -r '.id')
-  # Check if there's an ack for this message
-  ACK_EXISTS=$(jq -c "select(.type == \"ack\" and .context.references[]? == \"$MSG_ID\")" "$INBOX" 2>/dev/null)
-  if [ -z "$ACK_EXISTS" ]; then
-    echo "$MSG"
-  fi
-done)
+# Collect all acknowledged message IDs
+ACKED=$(jq -r 'select(.type == "ack") | .context.references[]? // empty' "$INBOX" 2>/dev/null | sort -u)
 
-if [ -n "$UNREAD" ]; then
-  COUNT=$(echo "$UNREAD" | wc -l | tr -d ' ')
-  echo "CC↔CAI SYNC: $COUNT unread message(s) from CAI in inbox:"
-  echo "$UNREAD" | while read -r MSG; do
-    TYPE=$(echo "$MSG" | jq -r '.type')
-    PRIORITY=$(echo "$MSG" | jq -r '.priority // "normal"')
-    CONTENT=$(echo "$MSG" | jq -r '.content' | head -c 200)
-    echo "  [$PRIORITY] ($TYPE) $CONTENT"
-  done
-  echo "To acknowledge, append an ack message to .claude/sync/inbox.jsonl"
-fi
+# Find unacknowledged external messages (source=cai or cc:*, not ack type)
+UNREAD_COUNT=0
+UNREAD_DETAIL=""
+
+while IFS= read -r MSG_ID; do
+  [ -z "$MSG_ID" ] && continue
+  if ! echo "$ACKED" | grep -qxF "$MSG_ID"; then
+    UNREAD_COUNT=$((UNREAD_COUNT + 1))
+    DETAIL=$(jq -r "select(.id == \"$MSG_ID\") | \"  [\(.priority // \"normal\")] \(.type): \(.content[0:150])\"" "$INBOX" 2>/dev/null)
+    UNREAD_DETAIL="$UNREAD_DETAIL
+$DETAIL"
+  fi
+done < <(jq -r 'select((.source == "cai" or (.source | startswith("cc:"))) and .type != "ack") | .id' "$INBOX" 2>/dev/null)
+
+[ "$UNREAD_COUNT" -eq 0 ] && exit 0
+
+# Output unread messages as session context
+echo "CC↔CAI SYNC: $UNREAD_COUNT unread message(s) from external sources:"
+echo "$UNREAD_DETAIL"
+echo ""
+echo "Review and acknowledge these messages. To ack, append a message with type:ack and context.references:[\"msg_id\"] to .claude/sync/inbox.jsonl."
 
 exit 0
