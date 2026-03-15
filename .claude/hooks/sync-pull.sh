@@ -25,7 +25,8 @@ cd "$CWD" 2>/dev/null || exit 0
 rm -f ".claude/sync/.last-push"
 
 # Pull latest changes (quiet, non-fatal — works offline gracefully)
-git pull --rebase --quiet 2>/dev/null
+# ff-only avoids rebase failures on dirty working trees; if diverged, next session reconciles
+git pull --ff-only --quiet 2>/dev/null
 
 # Check inbox for unread external messages
 INBOX=".claude/sync/inbox.jsonl"

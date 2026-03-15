@@ -282,3 +282,22 @@ Task safety = worst classification of any file it touches. Default = Coordinate 
   2. Patterns confirmed 2+ times > graduate to CLAUDE.md anti-patterns
   3. Universal patterns (not project-specific) > also add to ~/.claude/CLAUDE.md
   4. Clear graduated entries from LEARNINGS.md
+
+
+### Cross-Sync Session Protocol (MANDATORY)
+
+Before ending any session on a synced project, update `.claude/sync/state.json`:
+
+1. **Semantic fields** (via Edit tool):
+   - `state.last_session.summary` — 1-2 sentences of what was accomplished
+   - `state.current_tasks` — array of active work items
+   - `state.recent_decisions` — array of `{decision, rationale, date}` objects
+   - `state.next_session_priorities` — array of next steps
+
+2. **Pending inbox** (via Edit tool): For substantive decisions or messages, add items to `state.pending_inbox[]`:
+   ```json
+   {"type": "decision|task|note|flag|research", "content": "message text"}
+   ```
+   Optional: `"context": {}`, `"priority": "normal|urgent|low"`. sync-push.sh generates full inbox messages automatically.
+
+3. **Cross-project relevance**: If this session's work affects other synced projects, read `~/.claude/sync-registry.json` for project paths and write messages to target inboxes via sync-write.sh.

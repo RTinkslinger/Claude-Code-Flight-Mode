@@ -10,3 +10,6 @@ FLIGHT_MODE.md
 !.claude/hooks/
 !.claude/sequential-files.txt
 .claude/sync/.last-push
+
+# Build Roadmap — ephemeral working copy (Notion is source of truth)
+ROADMAP.md
