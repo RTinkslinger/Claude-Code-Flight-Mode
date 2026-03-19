@@ -4,7 +4,7 @@
 INPUT=$(cat)
 FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
 
-if echo "$FILE_PATH" | grep -qF "FLIGHT_MODE.md"; then
+if [ "$(basename "$FILE_PATH")" = "FLIGHT_MODE.md" ]; then
   cat <<EOF
 {
   "hookSpecificOutput": {

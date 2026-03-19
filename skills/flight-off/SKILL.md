@@ -20,7 +20,7 @@ If neither file exists, tell the user: "Flight mode doesn't appear to be active 
 ## Step 2: Count Flight Commits
 
 ```bash
-git log --oneline --all | grep "flight:" | wc -l
+git log --oneline | grep "flight:" | wc -l
 ```
 
 Also get the list of flight commits for the summary:
@@ -64,17 +64,28 @@ Into one clean commit. (y/n)
 
 **If yes — squash using non-interactive approach:**
 
+First, verify the squash target is safe:
 ```bash
-# Find the commit hash just before the first flight: commit
-# Walk the log and find the first non-flight commit
-BEFORE_FLIGHT=$(git log --oneline | grep -v "flight:" | head -1 | cut -d' ' -f1)
+# Find the first flight: commit and get its parent
+FIRST_FLIGHT=$(git log --oneline --reverse | grep "flight:" | head -1 | cut -d' ' -f1)
+BEFORE_FLIGHT=$(git rev-parse "${FIRST_FLIGHT}^" 2>/dev/null)
+```
 
-# Soft reset to that point (keeps all changes staged)
+If `BEFORE_FLIGHT` is empty (all commits are flight commits), tell the user:
+"All commits in this repo are flight commits — cannot squash safely. Skipping."
+
+Otherwise, proceed:
+```bash
 git reset --soft $BEFORE_FLIGHT
-
-# Create a single clean commit
 git commit -m "feat: [summary based on completed tasks]"
 ```
+
+After squashing, **verify the result**:
+```bash
+git log --oneline -5
+```
+
+Show the user the result and confirm the squash looks correct.
 
 Generate a meaningful commit message from the completed micro-tasks — not just "flight work" but a real description like "feat: add user authentication middleware and tests" or "fix: resolve race condition in WebSocket handler".
 
@@ -103,6 +114,16 @@ mv .flight-state.md ".flight-state-$(date +%Y-%m-%d).md"
 ```
 
 This keeps a record of the flight session. The dated file won't trigger flight mode recovery (the CLAUDE.md snippet checks for `.flight-state.md` specifically).
+
+## Step 6.5: Stop Dashboard Server
+
+Stop the live dashboard server if it's running:
+
+```bash
+echo '{"command":"stop","cwd":"'$(pwd)'"}' | bash "${CLAUDE_PLUGIN_ROOT}/scripts/dashboard-server.sh"
+```
+
+This kills the Python HTTP server on port 8234 and cleans up the serve directory.
 
 ## Step 7: Remove FLIGHT_MODE.md
 

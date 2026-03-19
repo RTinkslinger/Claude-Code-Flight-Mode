@@ -282,7 +282,7 @@ mkdir -p "$STATE_FILE_DIR"
 
 # Determine the hash so we know which state file to seed
 if command -v md5 >/dev/null 2>&1; then
-  DIR_HASH=$(echo -n "$TEST_DIR" | md5)
+  DIR_HASH=$(echo -n "$TEST_DIR" | md5 | cut -c1-12)
 elif command -v md5sum >/dev/null 2>&1; then
   DIR_HASH=$(echo -n "$TEST_DIR" | md5sum | cut -c1-12)
 else
@@ -458,6 +458,34 @@ for RATING in "EXCELLENT" "GOOD" "USABLE" "CHOPPY" "POOR" "UNKNOWN"; do
     pass "T8.12 calibration table has $RATING"
   else
     fail "T8.12 calibration for $RATING" "missing from table"
+  fi
+done
+
+# ═══════════════════════════════════════════════════
+# V2 TEST SUITES (call individual test files)
+# ═══════════════════════════════════════════════════
+section "V2: Running Sub-Test Suites"
+
+V2_TESTS=("test-v2-parse-flight.sh" "test-v2-network-detect.sh" "test-v2-flight-check.sh" "test-v2-data-validation.sh" "test-v2-dashboard.sh" "test-v2-lookup.sh" "test-v2-activate.sh" "test-v2-block-direct.sh" "test-v2-squash.sh")
+
+for V2_TEST in "${V2_TESTS[@]}"; do
+  V2_PATH="$PLUGIN_DIR/tests/$V2_TEST"
+  if [ -f "$V2_PATH" ]; then
+    V2_OUTPUT=$(bash "$V2_PATH" 2>&1)
+    V2_RC=$?
+    V2_PASSED=$(echo "$V2_OUTPUT" | grep -oE 'Passed: [0-9]+' | grep -oE '[0-9]+' || echo "0")
+    V2_FAILED=$(echo "$V2_OUTPUT" | grep -oE 'Failed: [0-9]+' | grep -oE '[0-9]+' || echo "0")
+    V2_SKIPPED=$(echo "$V2_OUTPUT" | grep -oE 'Skipped: [0-9]+' | grep -oE '[0-9]+' || echo "0")
+    PASS=$((PASS + V2_PASSED))
+    FAIL=$((FAIL + V2_FAILED))
+    SKIP=$((SKIP + V2_SKIPPED))
+    if [ "$V2_RC" -eq 0 ]; then
+      pass "$V2_TEST ($V2_PASSED passed)"
+    else
+      fail "$V2_TEST" "$V2_FAILED failed"
+    fi
+  else
+    skip "$V2_TEST" "file not found"
   fi
 done
 

@@ -2,7 +2,7 @@
 # Flight Mode — PostToolUse hook: track context usage and inject warnings at thresholds
 # Silent below 40% — zero context overhead for the first half of a session
 # Uses /tmp state file keyed by project directory for cross-call persistence
-set -euo pipefail
+set -uo pipefail
 
 INPUT=$(cat)
 CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
@@ -16,7 +16,7 @@ WORKDIR="${CWD:-${CLAUDE_PROJECT_DIR:-$(pwd)}}"
 # State file in /tmp keyed by project directory hash
 # macOS uses md5, Linux uses md5sum
 if command -v md5 >/dev/null 2>&1; then
-  DIR_HASH=$(echo -n "$WORKDIR" | md5)
+  DIR_HASH=$(echo -n "$WORKDIR" | md5 | cut -c1-12)
 elif command -v md5sum >/dev/null 2>&1; then
   DIR_HASH=$(echo -n "$WORKDIR" | md5sum | cut -c1-12)
 else
@@ -54,10 +54,11 @@ case "$TOOL_NAME" in
     ;;
 esac
 
-# Save state
-cat > "$STATE_FILE" << EOF
+# Save state (atomic write via temp + mv)
+cat > "${STATE_FILE}.tmp" << EOF
 {"tool_calls": $TOOL_CALLS, "file_reads": $FILE_READS, "lines_read": $LINES_READ}
 EOF
+mv "${STATE_FILE}.tmp" "$STATE_FILE"
 
 # Calculate estimated context usage percentage
 # Formula: (tool_calls * 2.5 + lines_read * 0.01) / 1.5
@@ -93,8 +94,12 @@ if [ $((TOOL_CALLS % 3)) -eq 0 ]; then
   API_STATUS="OFFLINE"
   IS_DROP=false
 
-  # Measure ping latency (timeout 2s)
-  PING_OUT=$(ping -c 1 -W 2 8.8.8.8 2>/dev/null) || true
+  # Measure ping latency (timeout 2s — macOS uses ms, Linux uses s)
+  if [[ "$(uname)" == "Darwin" ]]; then
+    PING_OUT=$(ping -c 1 -W 2000 8.8.8.8 2>/dev/null) || true
+  else
+    PING_OUT=$(ping -c 1 -W 2 8.8.8.8 2>/dev/null) || true
+  fi
   if [ -n "$PING_OUT" ]; then
     # Extract time from ping output (macOS: time=X.Y ms, Linux: time=X.Y ms)
     PING_MS=$(echo "$PING_OUT" | grep -oE 'time=[0-9]+\.?[0-9]*' | head -1 | cut -d= -f2 || echo "-1")
@@ -155,7 +160,8 @@ if [ $((TOOL_CALLS % 3)) -eq 0 ]; then
   UPDATED_STATE=$(jq -c --argjson m "$MEASUREMENTS" --argjson d "$DROPS" \
     '. + {measurements: $m, drops: $d}' "$STATE_FILE" 2>/dev/null) || true
   if [ -n "$UPDATED_STATE" ]; then
-    echo "$UPDATED_STATE" > "$STATE_FILE"
+    echo "$UPDATED_STATE" > "${STATE_FILE}.tmp"
+    mv "${STATE_FILE}.tmp" "$STATE_FILE"
   fi
 
   # Write live-data.json to dashboard serve directory if it exists

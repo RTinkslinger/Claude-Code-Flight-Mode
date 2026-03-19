@@ -14,22 +14,22 @@ CWD="$(pwd)"
 # --- 1. Parse flight input ---
 # parse-flight.sh accepts: stdin JSON {"input": "...", "plugin_dir": "..."} OR $1 as flight string
 # Using stdin JSON for full control over both fields.
-PARSE_RESULT=$(echo "{\"input\": \"$FLIGHT_ARGS\", \"plugin_dir\": \"$PLUGIN_DIR\"}" \
+PARSE_RESULT=$(jq -n --arg input "$FLIGHT_ARGS" --arg pd "$PLUGIN_DIR" '{input: $input, plugin_dir: $pd}' \
   | bash "$SCRIPTS_DIR/parse-flight.sh" 2>/dev/null) || PARSE_RESULT='{"confidence":"none"}'
 
 # --- 2. Network detection ---
 # network-detect.sh accepts: stdin JSON {"plugin_dir": "..."} OR env var CLAUDE_PLUGIN_ROOT
-NETWORK_RESULT=$(echo "{\"plugin_dir\": \"$PLUGIN_DIR\"}" \
+NETWORK_RESULT=$(jq -n --arg pd "$PLUGIN_DIR" '{plugin_dir: $pd}' \
   | bash "$SCRIPTS_DIR/network-detect.sh" 2>/dev/null) || NETWORK_RESULT='{"type":"unknown","ssid":null}'
 
 # --- 3. API availability check ---
 # flight-check.sh accepts: stdin JSON {"cwd": "...", "plugin_dir": "..."} OR env var CLAUDE_PLUGIN_ROOT
-API_RESULT=$(echo "{\"cwd\": \"$CWD\", \"plugin_dir\": \"$PLUGIN_DIR\"}" \
+API_RESULT=$(jq -n --arg cwd "$CWD" --arg pd "$PLUGIN_DIR" '{cwd: $cwd, plugin_dir: $pd}' \
   | bash "$SCRIPTS_DIR/flight-check.sh" 2>/dev/null) || API_RESULT='{"verdict":"OFFLINE"}'
 
 # --- 4. Start dashboard ---
 # dashboard-server.sh reads ALL input from stdin JSON: {command, cwd, plugin_dir, port}
-DASHBOARD_RESULT=$(echo "{\"command\": \"start\", \"cwd\": \"$CWD\", \"plugin_dir\": \"$PLUGIN_DIR\"}" \
+DASHBOARD_RESULT=$(jq -n --arg cwd "$CWD" --arg pd "$PLUGIN_DIR" '{command: "start", cwd: $cwd, plugin_dir: $pd}' \
   | bash "$SCRIPTS_DIR/dashboard-server.sh" 2>/dev/null) || DASHBOARD_RESULT='{"status":"error"}'
 
 # --- 5. Determine what's missing ---
@@ -54,7 +54,8 @@ fi
 LOOKUP_RESULT="null"
 if [ "$READY" = "true" ]; then
   DASHBOARD_DIR=$(echo "$DASHBOARD_RESULT" | jq -r '.serve_dir // empty')
-  LOOKUP_RESULT=$(echo "{\"airline_code\":\"$AIRLINE_CODE\",\"origin\":\"$ORIGIN\",\"destination\":\"$DESTINATION\",\"plugin_dir\":\"$PLUGIN_DIR\",\"dashboard_dir\":\"$DASHBOARD_DIR\"}" \
+  LOOKUP_RESULT=$(jq -n --arg ac "$AIRLINE_CODE" --arg orig "$ORIGIN" --arg dest "$DESTINATION" --arg pd "$PLUGIN_DIR" --arg dd "$DASHBOARD_DIR" \
+    '{airline_code: $ac, origin: $orig, destination: $dest, plugin_dir: $pd, dashboard_dir: $dd}' \
     | bash "$SCRIPTS_DIR/flight-on-lookup.sh" 2>/dev/null) || LOOKUP_RESULT="null"
 fi
 

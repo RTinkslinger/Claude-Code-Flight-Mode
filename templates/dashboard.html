@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
-  :root{--bg:#0a0e17;--card:#0f172a;--border:#1e293b;--cyan:#38bdf8;--green:#22c55e;--yellow:#eab308;--orange:#f97316;--red:#ef4444;--gray:#6b7280;--text:#e2e8f0;--muted:#94a3b8;--dim:#475569}
+  :root{--bg:#0a0e17;--card:#0f172a;--border:#1e293b;--cyan:#38bdf8;--green:#22c55e;--yellow:#eab308;--orange:#f97316;--red:#ef4444;--gray:#6b7280;--text:#e2e8f0;--muted:#94a3b8;--dim:#64748b}
   body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;padding:16px 24px}
   .header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-bottom:16px;border-bottom:1px solid var(--border);margin-bottom:20px}
   .header-left{display:flex;align-items:center;gap:16px}
@@ -19,7 +19,8 @@
   .badge-excellent{background:#22c55e22;color:var(--green);border:1px solid var(--green)}
   .badge-usable{background:#eab30822;color:var(--yellow);border:1px solid var(--yellow)}
   .badge-poor{background:#ef444422;color:var(--red);border:1px solid var(--red)}
-  .badge-limited{background:#f9731622;color:var(--orange);border:1px solid var(--orange)}
+  .badge-good{background:#22c55e22;color:var(--green);border:1px solid var(--green)}
+  .badge-choppy{background:#f9731622;color:var(--orange);border:1px solid var(--orange)}
   .header-right{display:flex;align-items:center;gap:20px;font-size:12px;color:var(--muted)}
   .elapsed{font-size:20px;font-weight:700;color:var(--cyan);font-variant-numeric:tabular-nums}
   .refresh-dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 2s infinite}
@@ -67,6 +68,7 @@
     <div class="card-title">Connectivity Timeline</div>
     <div style="position:relative" id="timelineWrap">
       <svg id="timelineSvg" viewBox="0 0 900 220" preserveAspectRatio="xMidYMid meet"></svg>
+      <svg id="timelineOverlay" viewBox="0 0 900 220" preserveAspectRatio="xMidYMid meet" style="position:absolute;top:0;left:0;pointer-events:none"></svg>
     </div>
   </div>
   <div class="card">
@@ -123,7 +125,7 @@ function signalColor(s) {
 }
 
 function ratingClass(r) {
-  const m = {EXCELLENT:'badge-excellent',USABLE:'badge-usable',LIMITED:'badge-limited',POOR:'badge-poor'};
+  const m = {EXCELLENT:'badge-excellent',GOOD:'badge-good',USABLE:'badge-usable',CHOPPY:'badge-choppy',POOR:'badge-poor'};
   return m[r] || 'badge-usable';
 }
 
@@ -137,24 +139,24 @@ function fmtTime(sec) {
 }
 
 function elapsedHours() {
-  if (!routeData) return 0;
+  if (!routeData || !routeData.takeoff_time) return -1;
   return (Date.now() - new Date(routeData.takeoff_time).getTime()) / 3600000;
 }
 
 function renderHeader() {
-  if (!routeData) return;
+  if (!routeData || !routeData.flight) return;
   const d = routeData;
   $('flightCode').textContent = d.flight;
-  $('routeStr').textContent = d.route.replace('-', ' → ');
-  $('airlineName').textContent = d.airline;
-  $('providerName').textContent = d.provider;
+  $('routeStr').textContent = d.route ? d.route.replace('-', ' → ') : '--- → ---';
+  $('airlineName').textContent = d.airline || '—';
+  $('providerName').textContent = d.provider || '—';
   const b = $('ratingBadge');
   b.textContent = d.rating;
   b.className = 'badge ' + ratingClass(d.rating);
 }
 
 function renderTimeline() {
-  if (!routeData) return;
+  if (!routeData || !routeData.waypoints) return;
   const svg = $('timelineSvg');
   const wp = routeData.waypoints;
   const dur = routeData.duration_hours;
@@ -205,15 +207,6 @@ function renderTimeline() {
     html += `<circle cx="${x}" cy="${y}" r="4" fill="${signalColor(w.signal)}" stroke="#0a0e17" stroke-width="1.5" data-idx="${i}" class="wp-dot"/>`;
   });
 
-  // YOU ARE HERE marker
-  const eh = elapsedHours();
-  if (eh >= 0 && eh <= dur) {
-    const mx = xScale(eh);
-    html += `<line x1="${mx}" y1="${cy}" x2="${mx}" y2="${cy+ch}" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4,3"/>`;
-    html += `<text x="${mx}" y="${cy-4}" text-anchor="middle" fill="#38bdf8" font-size="8" font-weight="700">NOW</text>`;
-    html += `<polygon points="${mx-5},${cy} ${mx+5},${cy} ${mx},${cy+6}" fill="#38bdf8"/>`;
-  }
-
   // Axes
   html += `<line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy+ch}" stroke="#1e293b" stroke-width="1"/>`;
   html += `<line x1="${cx}" y1="${cy+ch}" x2="${cx+cw}" y2="${cy+ch}" stroke="#1e293b" stroke-width="1"/>`;
@@ -234,6 +227,23 @@ function renderTimeline() {
     });
     dot.addEventListener('mouseleave', () => { $('tooltip').style.display = 'none'; });
   });
+}
+
+function renderNowMarker() {
+  if (!routeData || !routeData.waypoints) return;
+  const overlay = $('timelineOverlay');
+  const dur = routeData.duration_hours;
+  const cx = P.left, cy = P.top, cw = P.w - P.left - P.right, ch = P.h - P.top - P.bottom;
+  const xScale = h => cx + (h / dur) * cw;
+  const eh = elapsedHours();
+  let html = '';
+  if (eh >= 0 && eh <= dur) {
+    const mx = xScale(eh);
+    html += `<line x1="${mx}" y1="${cy}" x2="${mx}" y2="${cy+ch}" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+    html += `<text x="${mx}" y="${cy-4}" text-anchor="middle" fill="#38bdf8" font-size="8" font-weight="700">NOW</text>`;
+    html += `<polygon points="${mx-5},${cy} ${mx+5},${cy} ${mx},${cy+6}" fill="#38bdf8"/>`;
+  }
+  overlay.innerHTML = html;
 }
 
 function renderLatency() {
@@ -262,9 +272,9 @@ function renderLatency() {
 
   // Ping line
   if (ms.length > 1) {
-    const pingPts = ms.map((m, i) => `${xScale(i)},${yScale(m.ping_ms)}`).join(' ');
+    const pingPts = ms.map((m, i) => m.ping_ms >= 0 ? `${xScale(i)},${yScale(m.ping_ms)}` : null).filter(Boolean).join(' ');
     html += `<polyline points="${pingPts}" fill="none" stroke="#38bdf8" stroke-width="1.5" opacity="0.7"/>`;
-    const httpPts = ms.map((m, i) => `${xScale(i)},${yScale(m.http_ms)}`).join(' ');
+    const httpPts = ms.map((m, i) => m.http_ms >= 0 ? `${xScale(i)},${yScale(m.http_ms)}` : null).filter(Boolean).join(' ');
     html += `<polyline points="${httpPts}" fill="none" stroke="#a78bfa" stroke-width="1.5" opacity="0.7"/>`;
   }
 
@@ -272,8 +282,8 @@ function renderLatency() {
   if (ms.length > 0) {
     const last = ms[ms.length - 1];
     const lx = xScale(ms.length - 1);
-    html += `<circle cx="${lx}" cy="${yScale(last.ping_ms)}" r="3" fill="#38bdf8"/>`;
-    html += `<circle cx="${lx}" cy="${yScale(last.http_ms)}" r="3" fill="#a78bfa"/>`;
+    if (last.ping_ms >= 0) html += `<circle cx="${lx}" cy="${yScale(last.ping_ms)}" r="3" fill="#38bdf8"/>`;
+    if (last.http_ms >= 0) html += `<circle cx="${lx}" cy="${yScale(last.http_ms)}" r="3" fill="#a78bfa"/>`;
   }
 
   // X labels (timestamps)
@@ -326,7 +336,7 @@ function updateStatusCards() {
     }
   }
 
-  if (routeData) {
+  if (routeData && routeData.waypoints && routeData.waypoints.length > 0) {
     const eh = elapsedHours();
     const wp = routeData.waypoints;
     // Find current phase
@@ -362,7 +372,7 @@ function updateStatusCards() {
     } else {
       $('nextEvent').textContent = 'Arrival';
       $('nextEvent').style.color = '#22c55e';
-      $('nextEventSub').textContent = routeData.route.split('-')[1] || '';
+      $('nextEventSub').textContent = (routeData.route || '').split('-')[1] || '';
     }
   }
 }
@@ -381,7 +391,10 @@ function renderDrops() {
 }
 
 function updateElapsed() {
-  if (!routeData) return;
+  if (!routeData || !routeData.takeoff_time) {
+    $('elapsedTime').textContent = '--:--:--';
+    return;
+  }
   const sec = (Date.now() - new Date(routeData.takeoff_time).getTime()) / 1000;
   $('elapsedTime').textContent = fmtTime(Math.max(0, sec));
 }
@@ -402,8 +415,8 @@ function checkStale() {
 async function fetchRoute() {
   try {
     const r = await fetch('route-data.json');
-    if (r.ok) { routeData = await r.json(); renderHeader(); renderTimeline(); updateStatusCards(); }
-  } catch (e) { /* WiFi down — degrade gracefully */ }
+    if (r.ok) { routeData = await r.json(); renderHeader(); renderTimeline(); renderNowMarker(); updateStatusCards(); }
+  } catch (e) { console.warn('Flight Mode dashboard: route fetch failed', e); }
 }
 
 async function fetchLive() {
@@ -416,14 +429,15 @@ async function fetchLive() {
       updateStatusCards();
       renderDrops();
     }
-  } catch (e) { /* WiFi down — degrade gracefully */ }
+  } catch (e) { console.warn('Flight Mode dashboard: live fetch failed', e); }
 }
 
 async function init() {
   await fetchRoute();
   await fetchLive();
   setInterval(fetchLive, 10000);
-  setInterval(() => { updateElapsed(); checkStale(); renderTimeline(); }, 1000);
+  setInterval(fetchRoute, 60000);
+  setInterval(() => { updateElapsed(); checkStale(); renderNowMarker(); }, 1000);
 }
 
 init();

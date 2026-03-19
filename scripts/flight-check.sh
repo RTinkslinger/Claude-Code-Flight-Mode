@@ -186,7 +186,11 @@ fi
 # ---------------------------------------------------------------------------
 # 5. Latency baseline (ping 8.8.8.8)
 # ---------------------------------------------------------------------------
-ping_output=$(ping -c 3 -W 5 8.8.8.8 2>/dev/null) || true
+if [[ "$(uname)" == "Darwin" ]]; then
+  ping_output=$(ping -c 3 -W 5000 8.8.8.8 2>/dev/null) || true
+else
+  ping_output=$(ping -c 3 -W 5 8.8.8.8 2>/dev/null) || true
+fi
 if [ -n "$ping_output" ]; then
   # macOS ping: round-trip min/avg/max/stddev = X/Y/Z/W ms
   ping_avg=$(echo "$ping_output" | tail -1 | awk -F'/' '{print $5}' 2>/dev/null || true)

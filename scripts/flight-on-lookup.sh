@@ -187,7 +187,7 @@ if dashboard_dir:
         "provider": provider,
         "rating": rating,
         "duration_hours": duration,
-        "takeoff_time": None,
+        "takeoff_time": __import__('datetime').datetime.utcnow().isoformat() + "Z",
         "waypoints": waypoints,
         "weak_zone": weak_zone
     }

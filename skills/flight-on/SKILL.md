@@ -16,11 +16,30 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob
 
 The JSON above was gathered automatically. Your job is to interpret it and fill gaps.
 
+### Step 0: Check for existing flight mode
+
+Before proceeding, check if flight mode is already active:
+
+```bash
+[ -f FLIGHT_MODE.md ] && echo "ACTIVE" || echo "INACTIVE"
+```
+
+If **ACTIVE**, tell the user:
+"Flight mode is already active. Would you like to:
+1. Keep current session (recommended)
+2. Restart with new settings (will reset task progress)
+3. Run /flight-off first to cleanly deactivate"
+
+Wait for their choice. Only proceed with activation if they choose option 2 (and warn that .flight-state.md will be overwritten).
+
 ### Step 1: Check if ready
 
 Read the `ready` field:
 - If `true` → skip to Step 3 (Summary)
 - If `false` → go to Step 2
+
+Also check the `error` field:
+- If `error` exists → tell the user: "Preflight check encountered an issue: [error message]. Proceeding with manual setup." Then go to Step 2 to collect info manually.
 
 ### Step 2: Fill missing info
 
@@ -186,11 +205,14 @@ If you feel the session is getting long or the context is heavy:
 When the user runs `/flight-off`, flight commits will be squashed. The approach:
 
 ```bash
-# Find the commit before first flight: commit
-BEFORE_FLIGHT=$(git log --oneline | grep -v "^.*flight:" | head -1 | cut -d' ' -f1)
+# Find the first flight: commit and get its parent
+FIRST_FLIGHT=$(git log --oneline --reverse | grep "flight:" | head -1 | cut -d' ' -f1)
+BEFORE_FLIGHT=$(git rev-parse "${FIRST_FLIGHT}^" 2>/dev/null)
 # Squash all flight commits into one
 git reset --soft $BEFORE_FLIGHT
 git commit -m "feat: [summary of all flight work]"
 ```
+
+If `BEFORE_FLIGHT` is empty (all commits are flight commits), squash cannot be done safely — skip it.
 
 This is non-interactive and safe. The user decides whether to squash via `/flight-off`.

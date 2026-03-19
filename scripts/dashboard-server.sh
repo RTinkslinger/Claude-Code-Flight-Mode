@@ -23,7 +23,7 @@ PORT="${PORT:-8234}"
 
 # Compute directory hash (same approach as context-monitor.sh)
 if command -v md5 >/dev/null 2>&1; then
-  DIR_HASH=$(echo -n "$WORKDIR" | md5)
+  DIR_HASH=$(echo -n "$WORKDIR" | md5 | cut -c1-12)
 elif command -v md5sum >/dev/null 2>&1; then
   DIR_HASH=$(echo -n "$WORKDIR" | md5sum | cut -c1-12)
 else
@@ -71,8 +71,7 @@ cmd_start() {
   echo '{}' > "${SERVE_DIR}/live-data.json"
 
   # Start Python HTTP server in background
-  cd "$SERVE_DIR"
-  python3 -m http.server "$PORT" --bind 127.0.0.1 > /dev/null 2>&1 &
+  python3 -m http.server "$PORT" --bind 127.0.0.1 --directory "$SERVE_DIR" > /dev/null 2>&1 &
   local server_pid=$!
 
   # Verify the server started

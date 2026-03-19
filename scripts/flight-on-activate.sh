@@ -87,10 +87,5 @@ Flight mode activated. Awaiting task assignment.
 If this session dropped: Flight mode is active but no task was assigned yet. Ask the user what they want to work on.
 FSEOF
 
-cat << OUTEOF
-{
-  "status": "activated",
-  "flight_mode_path": "$CWD/FLIGHT_MODE.md",
-  "flight_state_path": "$CWD/.flight-state.md"
-}
-OUTEOF
+jq -n --arg fm "$CWD/FLIGHT_MODE.md" --arg fs "$CWD/.flight-state.md" \
+  '{status: "activated", flight_mode_path: $fm, flight_state_path: $fs}'
