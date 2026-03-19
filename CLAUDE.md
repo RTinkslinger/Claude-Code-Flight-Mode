@@ -95,7 +95,7 @@ echo '{"tool_name":"Bash","tool_input":{"command":"ls"}}' | bash scripts/context
 
 Track implementation decisions with minimal context overhead using a rolling window + compaction pattern.
 
-**IMPORTANT:** Enforced by a Stop hook — if you modify code files but don't update TRACES.md, the hook will prevent you from stopping and require you to update TRACES.md first.
+**IMPORTANT:** Enforced by a Stop hook — if you modify tracked files but don't update TRACES.md, the hook will prevent you from stopping and require you to update TRACES.md first.
 
 #### Quick Reference
 
@@ -106,33 +106,24 @@ Track implementation decisions with minimal context overhead using a rolling win
 
 #### What Counts as an Iteration
 
-An iteration is a work session where you:
-- Write or modify code files (not specs/docs)
-- Complete tasks from the phase plan
-- Make architectural or implementation decisions
+An iteration is any work session where tracked files were modified.
+Every session that changes something should leave a trace — what was done, why, and any decisions worth preserving.
 
-**Scope rule:** One iteration = one focus area. If you worked on 3 different things,
-that's 3 iterations, not 1. A good test: can you describe the focus in 5 words?
+NOT an iteration: Pure read-only sessions (research, Q&A, reviewing code without changes).
 
-NOT an iteration: Pure research, Q&A, planning, or documentation-only changes.
-
-#### After Each Coding Session (or before Session Close)
+#### After Each Session (or before Session Close)
 
 1. **Read `TRACES.md`** - find the last iteration number in "Current Work"
-2. **Add iteration entry** to "Current Work" section (template below)
+2. **Add iteration entry** to "Current Work" section (template above)
 3. **If iteration 3, 6, 9...** -> run compaction process (see below)
 
-#### Iteration Entry Template (Concise ~15 lines)
+#### Iteration Entry Template
 
 ```
 ### Iteration N - YYYY-MM-DD
-**Phase:** Phase X: Name
-**Focus:** Brief description
-
-**Changes:** `file.py` (what), `other.py` (what)
-**Decisions:** Key decision -> rationale
-**Next:** What's next
-
+**What:** One-sentence summary of what was done and why
+**Changes:** `file1.md` (what changed), `file2.py` (what changed)
+**Context:** Decisions made, discoveries, or reasoning worth preserving for future sessions
 ---
 ```
 
@@ -234,43 +225,6 @@ properties: {
 - Find current sprint: read TRACES.md > last milestone number + 1
 - Items discovered during Sprint N get tagged Sprint# = N
 - "What shipped in Sprint 3?" = query Roadmap: Sprint# = 3, Status = Shipped
-
-### Subagent Protocol
-
-Every Agent call must include 4 blocks:
-
-1. **CONSTRAINTS** — What the subagent cannot do: no MCP tools, no git operations,
-   no network access, no files outside the allowlist below.
-2. **FILE ALLOWLIST** — Every file the subagent may Read/Edit/Write, explicitly listed.
-   "Do NOT touch any files not on this list."
-3. **TASK** — Specific instructions with enough context to work independently.
-4. **SUCCESS CRITERIA** — What "done" looks like so the subagent can self-validate.
-
-**Parallel delegation pattern (for breaking big changes into multiple subagents):**
-1. DECOMPOSE — Analyze the change, identify independent subtasks
-2. MAP FILES — Assign each subtask an explicit file allowlist with ZERO overlap
-3. PARALLEL SPAWN — Multiple Agent calls, each with all 4 blocks
-4. REVIEW — Main session reviews all outputs for consistency
-5. COMMIT — Main session commits the combined changes
-
-### File Classification (Parallel Safety)
-
-Before parallel work (multi-tab or multi-subagent), classify target files:
-- **Safe** — New files, isolated files (0-1 importers), docs, research
-- **Coordinate** — Shared files with 2-4 importers across the codebase
-- **Sequential** — Config files, shared type definitions, files with 5+ importers
-
-**Auto-classification heuristic:**
-1. Pattern match on item description ("new file" = Safe, "schema change" = Sequential)
-2. If ambiguous: Grep for imports/references to target file, count fan-out
-3. Check known critical files list below
-
-**Known critical (Sequential) files for this project:**
-Maintained in `.claude/sequential-files.txt` (one filename per line).
-Initial: `CLAUDE.md`. Add files when parallel edits cause merge conflicts.
-The PreToolUse hook reads this file and warns subagents — it never blocks edits.
-
-Task safety = worst classification of any file it touches. Default = Coordinate if uncertain.
 
 ### LEARNINGS.md Protocol
 
