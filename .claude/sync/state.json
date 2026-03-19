@@ -10,7 +10,7 @@
   "state": {
     "status": "active",
     "last_session": {
-      "timestamp": "2026-03-15T03:46:53Z",
+      "timestamp": "2026-03-19T05:02:18Z",
       "summary": "Sync initialized by CC↔CAI sync system.",
       "key_commit": "fd211c9"
     },
@@ -18,7 +18,10 @@
     "recent_decisions": [],
     "blocked_on": [],
     "next_session_priorities": [],
-    "key_files_changed_last_session": []
+    "key_files_changed_last_session": [
+      ".claude/hooks/stop-check.sh",
+      ".gitignore"
+    ]
   },
   "architecture": {
     "summary": "CC plugin with Bash hooks, JSON config, Markdown docs. Cash Build System v1.1-beta deployed with 6 hooks. Phase 1 complete, Phase 2 in progress.",
@@ -35,6 +38,6 @@
       "Cash Build System v1.1-beta (6 hooks)"
     ]
   },
-  "updated_at": "2026-03-15T03:46:53Z",
+  "updated_at": "2026-03-19T05:02:18Z",
   "updated_by": "cc"
 }
