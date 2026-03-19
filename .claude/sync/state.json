@@ -10,7 +10,7 @@
   "state": {
     "status": "active",
     "last_session": {
-      "timestamp": "2026-03-19T05:22:17Z",
+      "timestamp": "2026-03-19T05:25:55Z",
       "summary": "Sync initialized by CC↔CAI sync system.",
       "key_commit": "fd211c9"
     },
@@ -21,14 +21,14 @@
     "key_files_changed_last_session": [
       ".claude/hooks/stop-check.sh",
       ".gitignore",
+      "CHECKPOINT.md",
       "TRACES.md",
       "data/airline-codes.json",
       "hooks/hooks.json",
       "scripts/block-direct-flight-mode.sh",
       "scripts/context-monitor.sh",
       "scripts/dashboard-server.sh",
-      "scripts/flight-check.sh",
-      "scripts/flight-on-activate.sh"
+      "scripts/flight-check.sh"
     ]
   },
   "architecture": {
@@ -46,6 +46,6 @@
       "Cash Build System v1.1-beta (6 hooks)"
     ]
   },
-  "updated_at": "2026-03-19T05:22:17Z",
+  "updated_at": "2026-03-19T05:25:55Z",
   "updated_by": "cc"
 }
